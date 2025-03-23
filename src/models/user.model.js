@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
+  _id: {
+    type: mongoose.Schema.Types.ObjectId,
+    auto: true // MongoDB sẽ tự động tạo
+  },
   username: {
     type: String,
     required: true,
@@ -30,5 +34,12 @@ const userSchema = new mongoose.Schema({
     default: 'user'
   }
 },{timestamps: true});
+
+// Thêm phương thức để lấy thông tin user an toàn (không bao gồm password)
+userSchema.methods.toSafeObject = function() {
+  const obj = this.toObject();
+  delete obj.password;
+  return obj;
+};
 
 module.exports = mongoose.model('User', userSchema); 
