@@ -1,9 +1,16 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 require('dotenv').config();
 
-const userRoutes = require('./routes/user.routes');
+const userRoutes = require('./routes/user.routes.js');
+const roomRoutes = require('./routes/room.routes.js');
+const deviceRoutes = require('./routes/device.routes.js');
+const sensorRoutes = require('./routes/sensor.routes.js');
+const emailjs = require('emailjs');
+const axios = require('axios');
+
 
 const app = express();
 
@@ -11,9 +18,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json()); // Nếu dùng body-parser
 
 // Routes
 app.use('/api/users', userRoutes);
+app.use('/api/rooms', roomRoutes);
+app.use('/api/devices', deviceRoutes);
+app.use('/api/sensors', sensorRoutes);
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/express-api')
@@ -26,7 +37,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something went wrong!' });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 }); 

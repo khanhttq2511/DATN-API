@@ -1,4 +1,5 @@
 const userService = require('../services/user.service');
+const axios = require('axios');
 
 class UserController {
   async createUser(req, res) {
@@ -25,7 +26,7 @@ class UserController {
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
-      res.json(user.toSafeObject());
+      res.json(user);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -53,6 +54,81 @@ class UserController {
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
+  }
+    // login
+  async login(req, res) {
+    try {
+      const user = await userService.login(req.body);
+      res.json(user);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+  // register
+  async register(req, res) {
+    try {
+      const token = await userService.register(req.body);
+      res.status(201).json({
+        success: true,
+        ...token
+      });
+    } catch (error) {
+      if (error.message === 'EMAIL_ALREADY_EXISTS') {
+        return res.status(400).json({
+          success: false,
+          message: 'Email này đã được sử dụng, vui lòng chọn email khác'
+        });
+      }
+      res.status(400).json({ 
+        success: false,
+        message: error.message 
+      });
+    }   
+  }
+  
+  // me
+  async me(req, res) {
+    try {
+      const userid = req.user._id;
+      console.log(userid);
+      const user = await userService.me(userid);
+      res.json(user);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+  // logout
+  async logout(req, res) {
+    res.clearCookie('token');
+    res.json({ message: 'Logged out successfully' });
+  }
+  // forgot password
+  async forgotPassword(req, res) {
+    try {
+        const email = req.body.email;
+        const result = await userService.forgotPassword(email);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+  // reset password
+  async resetPassword(req, res) {
+    const { email, password } = req.body;
+    const user = await userService.resetPassword(email, password);
+    res.json(user);
+  }
+  // send OTP to email
+  async sendOTP(req, res) {
+    const { email } = req.body;
+    const user = await userService.sendOTP(email);
+    res.json(user);
+  }
+  // verify OTP
+  async verifyOTP(req, res) {
+    const { email, otp } = req.body;
+    const user = await userService.verifyOTP(email, otp);
+    res.json(user);
   }
 }
 
