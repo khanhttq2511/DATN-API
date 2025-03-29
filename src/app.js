@@ -8,7 +8,6 @@ const userRoutes = require('./routes/user.routes.js');
 const roomRoutes = require('./routes/room.routes.js');
 const deviceRoutes = require('./routes/device.routes.js');
 const sensorRoutes = require('./routes/sensor.routes.js');
-const emailjs = require('emailjs');
 const axios = require('axios');
 
 

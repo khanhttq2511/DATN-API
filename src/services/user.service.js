@@ -1,10 +1,8 @@
 const User = require('../models/user.model.js');
 const { generateToken, comparePassword, hashPassword } = require('../utils');
 const crypto = require('crypto');
-const emailjs = require('@emailjs/browser'); // Thêm dòng này
 const dotenv = require("dotenv");  
 const axios = require('axios');
-const nodemailer = require('nodemailer');
 const { sendMail } = require('../email');
 const { forgotPasswordTemplate } = require('../lib/email-template/forgot-password');
 dotenv.config();
