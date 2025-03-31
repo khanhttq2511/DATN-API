@@ -11,8 +11,8 @@ class RoomService {
     return await Room.find({ userId: userId });
   }
 
-  async getRoomById(id) {
-    return await Room.findById(id);
+  async getRoomById(userId, id) {
+    return await Room.findOne({ userId: userId, _id: id });
   }
 
   async updateRoom(id, roomData) {

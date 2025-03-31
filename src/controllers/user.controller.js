@@ -99,6 +99,8 @@ class UserController {
   }
   // logout
   async logout(req, res) {
+    const userid = req.user._id;
+    const user = await userService.logout(userid);
     res.clearCookie('token');
     res.json({ message: 'Logged out successfully' });
   }
@@ -118,6 +120,20 @@ class UserController {
     const user = await userService.resetPassword(email, password);
     res.json(user);
   }
+  //change password
+  async changePassword(req, res) {
+    const { email, password, newPassword } = req.body;
+    const user = await userService.changePassword(email, password, newPassword);
+    res.json(user);
+  }
+  // logout
+  async logout(req, res) {
+    const userid = req.user._id;
+    const user = await userService.logout(userid);
+    res.clearCookie('token');
+    res.json({ message: 'Logged out successfully' });
+  } 
+
   // send OTP to email
   async sendOTP(req, res) {
     const { email } = req.body;

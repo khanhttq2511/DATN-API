@@ -22,7 +22,8 @@ class RoomController {
 
   async getRoomById(req, res) {
     try {
-      const room = await roomService.getRoomById(req.params.id);
+      const userId = req.user._id;
+      const room = await roomService.getRoomById(req.params.id, userId);
       if (!room) {
         return res.status(404).json({ message: 'Room not found' });
       }
@@ -34,7 +35,8 @@ class RoomController {
 
   async updateRoom(req, res) {
     try {
-      const room = await roomService.updateRoom(req.params.id, req.body);
+      const userId = req.user._id;
+      const room = await roomService.updateRoom(req.params.id, req.body, userId);
       if (!room) {
         return res.status(404).json({ message: 'Room not found' });
       }
@@ -46,7 +48,8 @@ class RoomController {
 
   async deleteRoom(req, res) {
     try {
-      const room = await roomService.deleteRoom(req.params.id);
+      const userId = req.user._id;
+      const room = await roomService.deleteRoom(req.params.id, userId);
       if (!room) {
         return res.status(404).json({ message: 'Room not found' });
       }
@@ -58,7 +61,8 @@ class RoomController {
 
   async getRoomsByFloor(req, res) {
     try {
-      const rooms = await roomService.getRoomsByFloor(req.params.floor);
+      const userId = req.user._id;
+      const rooms = await roomService.getRoomsByFloor(req.params.floor, userId);
       res.json(rooms);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -67,7 +71,8 @@ class RoomController {
 
   async getRoomsByType(req, res) {
     try {
-      const rooms = await roomService.getRoomsByType(req.params.type);
+      const userId = req.user._id;
+      const rooms = await roomService.getRoomsByType(req.params.type, userId);
       res.json(rooms);
     } catch (error) {
       res.status(500).json({ message: error.message });

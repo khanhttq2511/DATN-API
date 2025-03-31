@@ -29,7 +29,6 @@ class UserService {
   }
   // tạo hàm login return token
   async login(userData) {
-    console.log(userData);
     const user = await User.findOne({ email: userData.email });
     if (!user) {
       throw new Error('User not found');
@@ -39,12 +38,9 @@ class UserService {
     if (!isPasswordValid) {
       throw new Error('Invalid password');
     }
-    console.log(user);
     const token = generateToken(user);
     return {
-      username: user.username,
-      email: user.email,
-      role: user.role,
+      ...user._doc,
       token: token  
     };
     
@@ -80,6 +76,13 @@ class UserService {
     const user = await User.findById(userid);
     return user;
   }
+  // logout
+  async logout(userid) {
+    const user = await User.findById(userid);
+    user.token = null;
+    await user.save();
+    return user;
+  }
   // forgot password
   async forgotPassword(email) { 
     const user = await User.findOne({ email });
@@ -99,10 +102,15 @@ class UserService {
   async verifyOTP(email, otp) {
     const user = await User.findOne({ email });
     if (!user || user.otp !== otp || new Date() > user.otpExpires) {
-        return { message: "OTP không hợp lệ hoặc đã hết hạn" };
+        return { 
+          status: 400,
+          message: "OTP không hợp lệ hoặc đã hết hạn" 
+        };
     }
-
-    return { message: "OTP chính xác, tiếp tục đặt lại mật khẩu" };
+    return { 
+      status: 200,
+      message: "OTP chính xác, tiếp tục đặt lại mật khẩu" 
+    };
   }
   // reset password
   async resetPassword(email, password) {
@@ -112,6 +120,21 @@ class UserService {
     } 
     const hashedPassword = await hashPassword(password);
     user.password = hashedPassword;
+    await user.save();
+    return user;
+  }
+  // change password
+  async changePassword(email, password, newPassword) {
+    const user = await User.findOne({ email }); 
+    if (!user) {
+      throw new Error('Email không tồn tại');
+    }
+    const isPasswordValid = await comparePassword(password, user.password);
+    if (!isPasswordValid) {
+      throw new Error('Mật khẩu không chính xác');
+    }
+    const hashedNewPassword = await hashPassword(newPassword);
+    user.password = hashedNewPassword;
     await user.save();
     return user;
   }
