@@ -40,6 +40,7 @@ class UserService {
     }
     const token = generateToken(user);
     return {
+      id: user._id,
       username: user.username,
       email: user.email,
       role: user.role,
@@ -78,6 +79,7 @@ class UserService {
   async me(userid) {
     const user = await User.findById(userid);
     return {
+      id: user._id,
       username: user.username,
       email: user.email,
       role: user.role,
