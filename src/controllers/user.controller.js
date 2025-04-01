@@ -90,7 +90,6 @@ class UserController {
   async me(req, res) {
     try {
       const userid = req.user._id;
-      console.log(userid);
       const user = await userService.me(userid);
       res.json(user);
     } catch (error) {

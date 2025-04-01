@@ -17,7 +17,13 @@ const sensorSchema = new mongoose.Schema({
   },
   unit: {
     type: String,
-    default: ''
+    default: '',
+    // đơn vị của cảm biến được xác định theo type của cảm biến
+    enum: ['°C', '%', 'lux', '']
+    // nếu type là temperature thì đơn vị là °C
+    // nếu type là humidity thì đơn vị là %
+    // nếu type là light thì đơn vị là lux
+    // nếu type là motion thì đơn vị là ''
   },
   roomId: {
     type: mongoose.Schema.Types.ObjectId,

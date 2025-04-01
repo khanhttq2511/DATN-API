@@ -40,7 +40,10 @@ class UserService {
     }
     const token = generateToken(user);
     return {
-      ...user._doc,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      avatarURL: user.avatarURL,
       token: token  
     };
     
@@ -74,7 +77,12 @@ class UserService {
   // me
   async me(userid) {
     const user = await User.findById(userid);
-    return user;
+    return {
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      avatarURL: user.avatarURL
+    };
   }
   // logout
   async logout(userid) {
