@@ -11,9 +11,10 @@ class DeviceController {
     }
   }
 
-  async getAllDevices(req, res) {
+  async getAllDevicesByRoomId(req, res) {
     try {
-      const devices = await deviceService.getAllDevices();
+      const { roomId, organizationId } = req.query;
+      const devices = await deviceService.getAllDevicesByRoomId(roomId, organizationId);
       res.json(devices);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -69,6 +70,15 @@ class DeviceController {
     try {
       const devices = await deviceService.getDevicesByType(req.body.listType);
       res.json(devices);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async toggleStatus(req, res) {
+    try {
+      const device = await deviceService.toggleStatus(req.body.id, req.body.status, req.body.userId);
+      res.json(device);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

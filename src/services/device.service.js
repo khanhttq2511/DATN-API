@@ -3,6 +3,8 @@ const Device = require('../models/device.model');
 class DeviceService {
   async createDevice(deviceData, userData) {
     deviceData.userId = userData._id;
+    deviceData.organizationId = deviceData.organizationId;
+    deviceData.roomId = deviceData.roomId;
     // kiểm tra xem user có phải là admin không
     if(userData.role === 'admin') {
       deviceData.isAdmin = true;
@@ -11,8 +13,8 @@ class DeviceService {
     return await device.save();
   }
 
-  async getAllDevices() {
-    return await Device.find().populate('roomId');
+  async getAllDevicesByRoomId(roomId, organizationId) {
+    return await Device.find({ roomId: roomId, organizationId: organizationId });
   }
 
   async getDeviceById(id) {
@@ -46,6 +48,14 @@ class DeviceService {
   async getDevicesByType(listType) {
     return await Device.find({ type: { $in: listType }, isAdmin: true });
   } 
+  // kiểm tra trạng thái của device
+  async checkDeviceStatus(id) {
+    const device = await Device.findById(id);
+    if (!device) {
+      throw new Error('Device not found');
+    }
+    return device.status;
+  }
 }
 
 module.exports = new DeviceService(); 

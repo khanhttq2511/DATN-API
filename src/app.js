@@ -8,7 +8,8 @@ const userRoutes = require('./routes/user.routes.js');
 const roomRoutes = require('./routes/room.routes.js');
 const deviceRoutes = require('./routes/device.routes.js');
 const sensorRoutes = require('./routes/sensor.routes.js');
-const axios = require('axios');
+const mediaRoutes = require('./routes/media.routes.js');
+const organizationRoutes = require('./routes/organization.routes.js');
 
 
 const app = express();
@@ -24,7 +25,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/sensors', sensorRoutes);
-
+app.use('/api/media', mediaRoutes);
+app.use('/api/organizations', organizationRoutes);
 // Database connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/express-api')
   .then(() => console.log('Connected to MongoDB'))

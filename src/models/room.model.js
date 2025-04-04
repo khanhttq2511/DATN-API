@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const roomSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
+    required: false,
     trim: true
   },
   totalSensor: {
@@ -19,9 +19,9 @@ const roomSchema = new mongoose.Schema({
   type: {
     type: String,
     required: false,
-    enum: ['bedroom', 'kitchen', 'livingroom', 'bathroom']
+    enum: ['bedroom', 'kitchen', 'livingroom', 'movieroom']
   },
-  userId: {
+  userId: { 
     type: String,
     required: false
   },
@@ -29,6 +29,10 @@ const roomSchema = new mongoose.Schema({
     type: Array,
     required: false,
     default: []
+  },
+  organizationId: {
+    type: String,
+    required: false
   }
 },{timestamps: true});
 roomSchema.pre('save', async function(next) {

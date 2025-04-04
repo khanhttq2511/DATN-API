@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const sensorSchema = new mongoose.Schema({
   name: { //tên đầy đủ của cảm biến
     type: String,
-    required: true,
+    required: false,
     trim: true
   },
   type: { //loại cảm biến
@@ -39,6 +39,11 @@ const sensorSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'inactive'],
     default: 'inactive'
+  },
+  organizationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: true
   },
   
 },{timestamps: true});

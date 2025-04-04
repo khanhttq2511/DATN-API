@@ -31,16 +31,22 @@ class UserService {
   async login(userData) {
     const user = await User.findOne({ email: userData.email });
     if (!user) {
-      throw new Error('User not found');
+      return {
+        status: 400,
+        message: 'email không tồn tại'
+      };
     }
     // bcrypt so sánh password
     const isPasswordValid = await comparePassword(userData.password, user.password);
     if (!isPasswordValid) {
-      throw new Error('Invalid password');
+      return {
+        status: 400,
+        message: 'mật khẩu không chính xác'
+      };
     }
     const token = generateToken(user);
     return {
-      id: user._id,
+      _id: user._id,
       username: user.username,
       email: user.email,
       role: user.role,
@@ -59,7 +65,10 @@ class UserService {
     // Kiểm tra email tồn tại
     const emailExists = await this.checkEmailExists(userData.email);
     if (emailExists) {
-      throw new Error('EMAIL_ALREADY_EXISTS');
+      return {
+        status: 400,
+        message: 'email đã tồn tại'
+      };
     }
 
     // Tiếp tục quá trình đăng ký nếu email chưa tồn tại
@@ -79,7 +88,7 @@ class UserService {
   async me(userid) {
     const user = await User.findById(userid);
     return {
-      id: user._id,
+      _id: user._id,
       username: user.username,
       email: user.email,
       role: user.role,
@@ -97,7 +106,10 @@ class UserService {
   async forgotPassword(email) { 
     const user = await User.findOne({ email });
     if (!user) {
-      throw new Error('Email không tồn tại');
+      return {
+        status: 400,
+        message: 'Email không tồn tại'
+      };
     }
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
@@ -126,7 +138,10 @@ class UserService {
   async resetPassword(email, password) {
     const user = await User.findOne({ email });
     if (!user) {
-      throw new Error('Email không tồn tại');
+      return {
+        status: 400,
+        message: 'Email không tồn tại'
+      };
     } 
     const hashedPassword = await hashPassword(password);
     user.password = hashedPassword;
@@ -134,19 +149,28 @@ class UserService {
     return user;
   }
   // change password
-  async changePassword(email, password, newPassword) {
-    const user = await User.findOne({ email }); 
+  async changePassword(userId, password, newPassword) {
+    const user = await User.findById(userId); 
     if (!user) {
-      throw new Error('Email không tồn tại');
+      return {
+        status: 400,
+        message: 'User không tồn tại'
+      };
     }
     const isPasswordValid = await comparePassword(password, user.password);
     if (!isPasswordValid) {
-      throw new Error('Mật khẩu không chính xác');
+      return {
+        status: 400,
+        message: 'Mật khẩu không chính xác'
+      };
     }
     const hashedNewPassword = await hashPassword(newPassword);
     user.password = hashedNewPassword;
     await user.save();
-    return user;
+    return {
+      status: 200,
+      message: 'Mật khẩu đã được thay đổi thành công'
+    };
   }
 }
 

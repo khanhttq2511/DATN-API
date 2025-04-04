@@ -17,7 +17,6 @@ const deviceSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['active', 'inactive'],
-    default: 'inactive'
   },
   userId: {
     type: String,
@@ -27,6 +26,14 @@ const deviceSchema = new mongoose.Schema({
     type: Boolean,
     required: false,
     default: false
+  },
+  lastActive: { 
+    type: Date,
+    default: Date.now
+  },
+  organizationId: {
+    type: String,
+    required: false
   }
 },{timestamps: true});
 

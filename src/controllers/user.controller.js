@@ -1,5 +1,5 @@
 const userService = require('../services/user.service');
-const axios = require('axios');
+const { comparePassword } = require('../utils');
 
 class UserController {
   async createUser(req, res) {
@@ -121,8 +121,8 @@ class UserController {
   }
   //change password
   async changePassword(req, res) {
-    const { email, password, newPassword } = req.body;
-    const user = await userService.changePassword(email, password, newPassword);
+    const { userId, password, newPassword } = req.body;
+    const user = await userService.changePassword(userId, password, newPassword);
     res.json(user);
   }
   // logout
