@@ -30,10 +30,6 @@ const roomSchema = new mongoose.Schema({
     required: false,
     default: []
   },
-  organizationId: {
-    type: String,
-    required: false
-  }
 },{timestamps: true});
 roomSchema.pre('save', async function(next) {
   if(this.type === 'bedroom') {

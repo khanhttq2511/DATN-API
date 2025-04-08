@@ -31,10 +31,6 @@ const deviceSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  organizationId: {
-    type: String,
-    required: false
-  }
 },{timestamps: true});
 
 module.exports = mongoose.model('Device', deviceSchema); 

@@ -1,6 +1,7 @@
 //generate token
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const mqttService = require('./services/mqtt.service');
 
 //generate token
 const generateToken = (user) => {
@@ -21,5 +22,8 @@ const hashPassword = async (password) => {
 const comparePassword = async (password, hashedPassword) => {
     return await bcrypt.compare(password, hashedPassword);
 }
-
-module.exports = { generateToken, verifyToken, hashPassword, comparePassword };
+//send message to mqtt
+const sendMessageToTopic = async (topic, message) => {
+    mqttService.publish(topic, message);
+  };
+module.exports = { generateToken, verifyToken, hashPassword, comparePassword, sendMessageToTopic };

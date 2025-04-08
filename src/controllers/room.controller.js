@@ -14,8 +14,8 @@ class RoomController {
   async getAllRooms(req, res) {
     try {
       const userId = req.user._id;
-      const organizationId = req.params.organizationId;
-      const rooms = await roomService.getAllRooms(userId, organizationId);
+
+      const rooms = await roomService.getAllRooms(userId);
       res.json(rooms);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -83,13 +83,13 @@ class RoomController {
 
   async getRoomDetails(req, res) {
     try {
-      const { roomId, organizationId } = req.query;
+      const { roomId } = req.query;
 
-      if (!roomId || !organizationId) {
-        return res.status(400).json({ message: 'roomId and organizationId are required.' });
+      if (!roomId) {
+        return res.status(400).json({ message: 'roomId is required.' });
       }
 
-      const roomDetails = await roomService.getRoomDetails(roomId, organizationId);
+      const roomDetails = await roomService.getRoomDetails(roomId);
 
       if (!roomDetails) {
         return res.status(404).json({ message: 'Room not found.' });

@@ -3,7 +3,6 @@ const deviceService = require('../services/device.service');
 class DeviceController {
   async createDevice(req, res) {
     try {
-      console.log(req.user);
       const device = await deviceService.createDevice(req.body, req.user);
       res.status(201).json(device);
     } catch (error) {
@@ -13,8 +12,8 @@ class DeviceController {
 
   async getAllDevicesByRoomId(req, res) {
     try {
-      const { roomId, organizationId } = req.query;
-      const devices = await deviceService.getAllDevicesByRoomId(roomId, organizationId);
+      const { roomId } = req.query;
+      const devices = await deviceService.getAllDevicesByRoomId(roomId);
       res.json(devices);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -77,7 +76,7 @@ class DeviceController {
 
   async toggleStatus(req, res) {
     try {
-      const device = await deviceService.toggleStatus(req.body.id, req.body.status, req.body.userId);
+      const device = await deviceService.toggleStatus(req.body.id, req.body.status);
       res.json(device);
     } catch (error) {
       res.status(500).json({ message: error.message });

@@ -7,8 +7,8 @@ class RoomService {
     return await room.save(); 
   }
 
-  async getAllRooms(userId, organizationId) {
-    return await Room.find({ userId: userId, organizationId: organizationId });
+  async getAllRooms(userId) {
+    return await Room.find({ userId: userId });
   }
 
   async getRoomById(userId, id) {
@@ -38,8 +38,8 @@ class RoomService {
       { new: true }
     );
   }
-  async getRoomDetails(roomId, organizationId) {
-    return await Room.findOne({ _id: roomId, organizationId: organizationId });
+  async getRoomDetails(roomId) {
+    return await Room.findOne({ _id: roomId });
   }
 }
 

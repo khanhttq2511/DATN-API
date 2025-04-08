@@ -23,6 +23,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.15.0",
     "mongoose": "^8.0.3",
+    "mqtt": "^5.10.4",
     "nodemailer": "^6.10.0"
   },
   "devDependencies": {

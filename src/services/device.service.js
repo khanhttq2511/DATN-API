@@ -1,9 +1,8 @@
 const Device = require('../models/device.model');
-
+const { sendMessageToTopic } = require('../utils');
 class DeviceService {
   async createDevice(deviceData, userData) {
     deviceData.userId = userData._id;
-    deviceData.organizationId = deviceData.organizationId;
     deviceData.roomId = deviceData.roomId;
     // kiểm tra xem user có phải là admin không
     if(userData.role === 'admin') {
@@ -13,8 +12,8 @@ class DeviceService {
     return await device.save();
   }
 
-  async getAllDevicesByRoomId(roomId, organizationId) {
-    return await Device.find({ roomId: roomId, organizationId: organizationId });
+  async getAllDevicesByRoomId(roomId) {
+    return await Device.find({ roomId: roomId });
   }
 
   async getDeviceById(id) {
@@ -55,6 +54,23 @@ class DeviceService {
       throw new Error('Device not found');
     }
     return device.status;
+  }
+  // toggle status của device
+  async toggleStatus(id, status) {
+    const device = await Device.findById(id);
+    console.log(device);
+    if (!device) {
+      throw new Error('Device not found');
+    }
+    if (device.status === 'active') {
+      device.status = 'inactive';
+    } else {
+      device.status = 'active';
+    }
+    console.log(id);
+    console.log(status);
+    sendMessageToTopic(id, status);
+    return await device.save();
   }
 }
 

@@ -40,11 +40,6 @@ const sensorSchema = new mongoose.Schema({
     enum: ['active', 'inactive'],
     default: 'inactive'
   },
-  organizationId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Organization',
-    required: true
-  },
   
 },{timestamps: true});
 
