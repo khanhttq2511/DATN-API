@@ -58,7 +58,7 @@ class DeviceService {
   // toggle status của device
   async toggleStatus(id, status) {
     const device = await Device.findById(id);
-    console.log(device);
+    console.log("device", device);
     if (!device) {
       throw new Error('Device not found');
     }
@@ -67,7 +67,7 @@ class DeviceService {
     } else {
       device.status = 'active';
     }
-    console.log(id);
+    console.log("id", id);
     console.log(status);
     sendMessageToTopic(id, status);
     return await device.save();
