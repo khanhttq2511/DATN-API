@@ -30,21 +30,27 @@ const roomSchema = new mongoose.Schema({
     required: false,
     default: []
   },
+  organizationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: true
+  },
 },{timestamps: true});
 roomSchema.pre('save', async function(next) {
   if(this.type === 'bedroom') {
-    this.allowDevice = ['fan', 'light'];
+    this.allowDevice = ['fan'];
   }
   else if (this.type === 'kitchen') { 
-    this.allowDevice = ['fan', 'light'];
+    this.allowDevice = ['light'];
   }
   else if (this.type === 'livingroom') {
-    this.allowDevice = ['fan', 'light'];
+    this.allowDevice = ['light'];
   }
-  else if (this.type === 'bathroom') {
-    this.allowDevice = ['fan', 'light'];
+  else if (this.type === 'movieroom') {
+    this.allowDevice = ['light', 'fan'];
   }
   next();
 });
+
 module.exports = mongoose.model('Room', roomSchema); 
 

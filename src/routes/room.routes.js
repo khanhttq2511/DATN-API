@@ -5,14 +5,14 @@ const roomController = require('../controllers/room.controller.js');
 const { protect } = require('../middleware');
 // Basic CRUD routes
 router.post('/', protect, roomController.createRoom);
-router.get('/', protect, roomController.getAllRooms);
+router.get('/', roomController.getAllRooms);
 router.get('/:id', roomController.getRoomById);
 router.get('/', roomController.getRoomDetails);
-router.put('/:id', roomController.updateRoom);
-router.delete('/:id', roomController.deleteRoom);
+router.put('/:id', protect, roomController.updateRoom);
+router.delete('/:id', protect, roomController.deleteRoom);
 
 
 // Additional routes
-router.get('/type/:type', roomController.getRoomsByType);
+// router.get('/type/:type', roomController.getRoomsByType);
 
 module.exports = router; 

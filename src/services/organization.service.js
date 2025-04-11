@@ -48,16 +48,18 @@ class OrganizationService {
 
             // Explicitly add owner to members array as pre-save hook was removed from model
             const newOrganization = new Organization({
+                avatarURL: owner.avatarURL,
+                username: owner.username,
                 name,
                 ownerId: ownerUserId,
-                members: [{ userId: ownerUserId, role: 'owner', status: 'joined' }] // Add owner here
+                members: [{ userId: ownerUserId, role: 'owner', status: 'joined', email: owner.email, avatarURL: owner.avatarURL, username: owner.username }] // Add owner here
             });
 
             await newOrganization.save(); // Mongoose validation errors will throw here
 
             // Update the owner's user document
             await User.findByIdAndUpdate(ownerUserId, {
-                $addToSet: { organizations: { organizationId: newOrganization._id, role: 'owner', status: 'joined' } }
+                $addToSet: { organizations: { organizationId: newOrganization._id, role: 'owner', status: 'joined', email: owner.email, avatarURL: owner.avatarURL, username: owner.username } }
             }, { new: true }); // addToSet prevents duplicates
 
             // Populate owner details before returning
@@ -89,8 +91,6 @@ class OrganizationService {
                 .populate('ownerId', 'name email')
                 // .populate('members.userId', 'name email')
                 .sort({ createdAt: -1 });
-            console.log("organizations", organizations);
-            console.log("organizations.members", organizations[0].members);
             return organizations;
         } catch (error) {
              console.error("Error fetching organizations by user:", error);
@@ -249,12 +249,12 @@ class OrganizationService {
             }
 
             // Add the member
-            organization.members.push({ userId: userToAdd._id, role , email: userToAdd.email, status: 'pending' });
+            organization.members.push({ userId: userToAdd._id, role , email: userToAdd.email, status: 'joined', avatarURL: userToAdd.avatarURL, username: userToAdd.username });
             await organization.save(); // Use save to run schema validations on members array
 
             // Update the added user's document
             await User.findByIdAndUpdate(userToAdd._id, {
-                $addToSet: { organizations: { organizationId: orgId, role: role, email: userToAdd.email, status: 'pending' } }
+                $addToSet: { organizations: { organizationId: orgId, role: role, email: userToAdd.email, status: 'joined', avatarURL: userToAdd.avatarURL, username: userToAdd.username } }
             }, { new: true });
 
             // Return updated org with populated members

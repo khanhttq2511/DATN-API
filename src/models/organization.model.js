@@ -20,9 +20,22 @@ const memberSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'accepted', 'rejected', 'joined'],
-    default: 'pending',
+    enum: ['accepted', 'rejected', 'joined'],
+    default: 'joined',
   },
+  email: {
+    type: String,
+    required: false
+  },
+  avatarURL: {
+    type: String,
+    default: ''
+  },
+  username: {
+    type: String,
+    required: false
+  },
+
 }, { _id: false }); // Không tạo _id riêng cho mỗi sub-document thành viên
 
 // Định nghĩa schema chính cho Organization theo style tương tự user.model.js

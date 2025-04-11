@@ -1,18 +1,17 @@
 const Room = require('../models/room.model');
 
 class RoomService {
-  async createRoom(roomData, userData) {
-    roomData.userId = userData._id;
+  async createRoom(roomData) {
     const room = new Room(roomData);
     return await room.save(); 
   }
 
-  async getAllRooms(userId) {
-    return await Room.find({ userId: userId });
+  async getAllRooms(organizationId) {
+    return await Room.find({ organizationId: organizationId });
   }
 
-  async getRoomById(userId, id) {
-    return await Room.findOne({ userId: userId, _id: id });
+  async getRoomById(organizationId, id) {
+    return await Room.findOne({ organizationId: organizationId, _id: id });
   }
 
   async updateRoom(id, roomData) {
