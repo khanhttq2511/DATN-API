@@ -5,6 +5,8 @@ const dotenv = require("dotenv");
 const axios = require('axios');
 const { sendMail } = require('../email');
 const { forgotPasswordTemplate } = require('../lib/email-template/forgot-password');
+const jwt = require('jsonwebtoken');
+
 dotenv.config();
 class UserService {
   async createUser(userData) {
@@ -171,7 +173,25 @@ class UserService {
       status: 200,
       message: 'Mật khẩu đã được thay đổi thành công'
     };
+    
   }
+  // refresh token
+  async refreshToken(refreshToken) {
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    if (!decoded) {
+      throw new Error("Invalid refresh token");
+    }
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      throw new Error("User not found");
+    }
+  
+    const token = generateToken(user);
+    console.log(token);
+    return {
+      token,
+    };
+  };
 }
 
 

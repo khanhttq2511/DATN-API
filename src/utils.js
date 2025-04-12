@@ -26,4 +26,18 @@ const comparePassword = async (password, hashedPassword) => {
 const sendMessageToTopic = async (topic, message) => {
     mqttService.publish(topic, message);
   };
-module.exports = { generateToken, verifyToken, hashPassword, comparePassword, sendMessageToTopic };
+
+//get cookie by name
+const getCookieByName = (cookieName, cookieString) => {
+    const cookieArray = cookieString.split(";");
+    const cookie = cookieArray.find((c) => c.trim().startsWith(`${cookieName}=`));
+    return cookie ? cookie.split("=")[1].trim() : null;
+  };
+  const generateRefreshToken = (user) => {
+    return jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+  };
+module.exports = { generateToken, verifyToken, hashPassword, comparePassword, sendMessageToTopic, getCookieByName, generateRefreshToken };

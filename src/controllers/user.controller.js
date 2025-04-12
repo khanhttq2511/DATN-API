@@ -1,11 +1,10 @@
 const userService = require('../services/user.service');
-const { comparePassword } = require('../utils');
-
+const { comparePassword, generateToken, getCookieByName, generateRefreshToken } = require('../utils');
 class UserController {
   async createUser(req, res) {
     try {
       const user = await userService.createUser(req.body);
-      res.status(201).json(user.toSafeObject());
+      res.status(201).json(user.toSafeObject());  
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
@@ -59,6 +58,13 @@ class UserController {
   async login(req, res) {
     try {
       const user = await userService.login(req.body);
+      const refreshToken = generateRefreshToken(user);
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
       res.json(user);
     } catch (error) {
       res.status(400).json({ message: error.message });
@@ -145,6 +151,18 @@ class UserController {
     const user = await userService.verifyOTP(email, otp);
     res.json(user);
   }
+  // refresh token
+  async refreshToken(req, res) {
+    try {
+      console.log("refreshToken-----------", req.headers);
+      const refreshToken = getCookieByName("refreshToken", req.headers.cookie);
+      const result = await userService.refreshToken(refreshToken);
+      res.json(result);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Server Error" });
+    }
+  };
 }
 
 module.exports = new UserController(); 

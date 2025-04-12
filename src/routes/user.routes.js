@@ -17,5 +17,6 @@ router.post('/verify-otp', userController.verifyOTP);
 router.post('/send-otp', userController.sendOTP);
 router.post('/change-password', userController.changePassword);
 router.post('/logout', protect, userController.logout);
+router.post('/refresh-token', userController.refreshToken);
 
 module.exports = router; 

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const { setupMQTT } = require('./config/mqtt');
@@ -16,7 +17,13 @@ const historyRoutes = require('./routes/history.routes.js');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json()); // Nếu dùng body-parser

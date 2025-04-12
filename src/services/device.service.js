@@ -88,7 +88,16 @@ class DeviceService {
       roomId: device.roomId,
       roomType: roomType,
     });
-    sendMessageToTopic(id, status);
+
+    let formattoPub = {
+      roomId: device.roomId,
+      [device.type]: device.status === 'active' 
+    }
+    console.log(formattoPub);
+    //format send topic 
+    const topic = `devices`;
+    sendMessageToTopic(topic, formattoPub);
+
     return await device.save();
     } catch (error) {
       throw new Error(error);
