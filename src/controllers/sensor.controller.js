@@ -12,7 +12,9 @@ class SensorController {
 
   async getAllSensors(req, res) {
     try {
-      const sensors = await sensorService.getAllSensors();
+      const roomId = req.query.roomId;
+      const organizationId = req.query.organizationId;
+      const sensors = await sensorService.getAllSensors(roomId, organizationId);
       res.json(sensors);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -21,8 +23,10 @@ class SensorController {
 
   async getSensorById(req, res) {
     try {
-      const sensor = await sensorService.getSensorById(req.params.id);
-      if (!sensor) {
+      const roomId = req.query.roomId;
+      const organizationId = req.query.organizationId;
+      const sensor = await sensorService.getSensorById(roomId, organizationId);
+      if (!sensor) {  
         return res.status(404).json({ message: 'Sensor not found' });
       }
       res.json(sensor);

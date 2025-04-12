@@ -76,7 +76,11 @@ class DeviceController {
 
   async toggleStatus(req, res) {
     try {
-      const device = await deviceService.toggleStatus(req.body.id, req.body.status);
+      const user = req.user;
+      const roomType = req.body.roomType;
+      const device = await deviceService.toggleStatus(req.body.id, req.body.status, roomType, user);
+      console.log("user", user);
+      console.log("roomType", roomType);
       res.json(device);
     } catch (error) {
       res.status(500).json({ message: error.message });

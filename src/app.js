@@ -11,6 +11,7 @@ const deviceRoutes = require('./routes/device.routes.js');
 const sensorRoutes = require('./routes/sensor.routes.js');
 const mediaRoutes = require('./routes/media.routes.js');
 const organizationRoutes = require('./routes/organization.routes.js');
+const historyRoutes = require('./routes/history.routes.js');
 // const addmemberRoutes = require('./routes/addmember.routes.js');
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api/devices', deviceRoutes);
 app.use('/api/sensors', sensorRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/organizations', organizationRoutes);
+app.use('/api/history', historyRoutes);
 // app.use('/api/addmember', addmemberRoutes);
 setupMQTT(app);
 

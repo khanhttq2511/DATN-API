@@ -13,12 +13,12 @@ class SensorService {
     return await sensor.save();
   }
 
-  async getAllSensors() {
-    return await Sensor.find().populate('deviceId');
+  async getAllSensors(roomId, organizationId) {
+    return await Sensor.find({ roomId, organizationId });
   }
 
-  async getSensorById(id) {
-    return await Sensor.findById(id).populate('deviceId');
+  async getSensorById(roomId, organizationId) {
+    return await Sensor.find({ roomId, organizationId });
   }
 
   async updateSensor(id, sensorData) {

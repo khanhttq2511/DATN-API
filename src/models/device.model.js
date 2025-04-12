@@ -1,3 +1,4 @@
+const { toolresults } = require('googleapis/build/src/apis/toolresults');
 const mongoose = require('mongoose');
 
 const deviceSchema = new mongoose.Schema({
@@ -8,7 +9,7 @@ const deviceSchema = new mongoose.Schema({
   },
   roomId: {
     type: String,
-    required: false
+    required: true
   },
   type: {
     type: String,
@@ -17,6 +18,7 @@ const deviceSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['active', 'inactive'],
+    required: true
   },
   userId: {
     type: String,

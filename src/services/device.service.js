@@ -1,5 +1,8 @@
 const Device = require('../models/device.model');
 const { sendMessageToTopic } = require('../utils');
+const HistoryService = require('./history.service');
+const History = require('../models/history.model');
+
 class DeviceService {
   async createDevice(deviceData, userData) {
     deviceData.userId = userData._id;
@@ -29,7 +32,15 @@ class DeviceService {
   }
 
   async deleteDevice(id) {
-    return await Device.findByIdAndDelete(id);
+    try {
+      // Xóa tất cả lịch sử thiết bị trước
+      await History.deleteMany({ deviceId: id });
+      
+      // Sau đó xóa thiết bị
+      return await Device.findByIdAndDelete(id);
+    } catch (error) {
+      throw new Error(`Error deleting device: ${error.message}`);
+    }
   }
 
   async getDevicesByRoom(roomId) {
@@ -56,21 +67,32 @@ class DeviceService {
     return device.status;
   }
   // toggle status của device
-  async toggleStatus(id, status) {
-    const device = await Device.findById(id);
-    console.log("device", device);
-    if (!device) {
-      throw new Error('Device not found');
+  async toggleStatus(id, status, roomType, user) {
+    try {
+      const device = await Device.findById(id);
+      if (!device) {
+        throw new Error('Device not found');
     }
     if (device.status === 'active') {
       device.status = 'inactive';
     } else {
       device.status = 'active';
     }
-    console.log("id", id);
-    console.log(status);
+    await HistoryService.createHistory({
+      deviceId: id,
+      deviceName: device.name,
+      deviceType: device.type,
+      action: status,
+      organizationId: device.organizationId,
+      userId: user._id,
+      roomId: device.roomId,
+      roomType: roomType,
+    });
     sendMessageToTopic(id, status);
     return await device.save();
+    } catch (error) {
+      throw new Error(error);
+    }
   }
 }
 

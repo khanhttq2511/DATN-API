@@ -9,7 +9,7 @@ router.get('/', deviceController.getAllDevicesByRoomId);
 router.get('/:id', deviceController.getDeviceById);
 router.put('/:id', deviceController.updateDevice);
 router.delete('/:id', deviceController.deleteDevice);
-router.post('/toggle-status', deviceController.toggleStatus);
+router.post('/toggle-status', protect, deviceController.toggleStatus);
 
 
 

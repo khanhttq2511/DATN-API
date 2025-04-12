@@ -20,20 +20,10 @@ const sensorSchema = new mongoose.Schema({
     ref: 'Room',
     required: true
   },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: false
-  },
   organizationId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Organization',
-    required: false
-  },
-  status: {
-    type: String,
-    enum: ['active', 'inactive'],
-    default: 'inactive'
+    required: true
   },
   
 },{timestamps: true});
