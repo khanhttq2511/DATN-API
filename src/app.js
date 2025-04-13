@@ -17,7 +17,17 @@ const historyRoutes = require('./routes/history.routes.js');
 const app = express();
 
 // Middleware
-app.use(cors())
+app.use(cors({
+  origin: [
+    'https://smarthome-henna.vercel.app', 
+    'https://www.smarthome-henna.vercel.app',
+    'http://localhost:3000',  // Thêm localhost cho môi trường development
+    // Thêm các origin khác nếu cần
+  ],
+  credentials: true,  // Quan trọng: bật hỗ trợ credentials
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json()); // Nếu dùng body-parser
