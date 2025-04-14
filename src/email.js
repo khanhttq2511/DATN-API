@@ -1,5 +1,5 @@
-import nodemailer from "nodemailer";
-import { google } from "googleapis";
+const nodemailer = require("nodemailer");
+const { google } = require("googleapis");
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
@@ -68,7 +68,7 @@ async function sendMail(mailOptions) {
   }
 }
 // Xuất các hàm để sử dụng ở các file khác
-export {
+module.exports = {
   createTransporter,
   sendMail,
 };

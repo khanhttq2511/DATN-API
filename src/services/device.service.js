@@ -70,6 +70,7 @@ class DeviceService {
   async toggleStatus(id, status, roomType, user) {
     try {
       const device = await Device.findById(id);
+      console.log("device", device);
       if (!device) {
         throw new Error('Device not found');
     }
