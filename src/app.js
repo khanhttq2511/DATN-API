@@ -19,6 +19,7 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: [
+    'https://velthome.online',
     'https://smarthome-henna.vercel.app', 
     'https://www.smarthome-henna.vercel.app',
     'http://localhost:3000',  // Thêm localhost cho môi trường development
