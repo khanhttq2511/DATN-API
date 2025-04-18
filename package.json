@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
+    "agenda": "^5.0.0",
     "axios": "^1.8.4",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
@@ -25,7 +26,9 @@
     "mongodb": "^6.15.0",
     "mongoose": "^8.0.3",
     "mqtt": "^5.10.4",
-    "nodemailer": "^6.10.0"
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.10.0",
+    "path": "^0.12.7"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

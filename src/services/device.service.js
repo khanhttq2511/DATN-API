@@ -36,6 +36,9 @@ class DeviceService {
       // Xóa tất cả lịch sử thiết bị trước
       await History.deleteMany({ deviceId: id });
       
+      // Xóa tất cả lịch hẹn giờ của thiết bị
+      await Schedule.deleteMany({ deviceId: id });
+      
       // Sau đó xóa thiết bị
       return await Device.findByIdAndDelete(id);
     } catch (error) {
@@ -47,7 +50,18 @@ class DeviceService {
     return await Device.find({ roomId });
   }
 
-  async updateDeviceStatus(id, status) {
+  async updateDeviceStatus(id, status, roomType) {
+    const device = await Device.findById(id);
+    await HistoryService.createHistory({
+      deviceId: id,
+      deviceName: device.name,
+      deviceType: device.type,
+      action: status,
+      organizationId: device.organizationId,
+      userId: device.userId,
+      roomId: device.roomId,
+      roomType: roomType,
+    });
     return await Device.findByIdAndUpdate(
       id,
       { status, lastActive: Date.now() },
@@ -70,7 +84,7 @@ class DeviceService {
   async toggleStatus(id, status, roomType, user) {
     try {
       const device = await Device.findById(id);
-      console.log("device", device);
+      // console.log("device", device);
       if (!device) {
         throw new Error('Device not found');
     }
@@ -92,11 +106,13 @@ class DeviceService {
 
     let formattoPub = {
       roomId: device.roomId,
-      [device.type]: device.status === 'active' 
+      type: device.type,
+      status: device.status === 'active' ,
+      roomType: roomType
     }
-    console.log(formattoPub);
+    // console.log(formattoPub);
     //format send topic 
-    const topic = `devices`;
+    const topic = `devices-down`;
     sendMessageToTopic(topic, formattoPub);
 
     return await device.save();
@@ -104,6 +120,28 @@ class DeviceService {
       throw new Error(error);
     }
   }
+
+  async updateDeviceStatusAfterConnected(roomId, type, status,roomType) {
+    const device = await Device.findOne({ roomId: roomId, type: type });
+    // console.log("device", device);
+    if (!device) {
+      throw new Error('Device not found');
+    }
+    device.status = status;
+    await HistoryService.createHistory({
+      deviceId: device._id,
+      deviceName: device.name,
+      deviceType: device.type,
+      action: status,
+      organizationId: device.organizationId,
+      userId: device.userId,
+      roomId: device.roomId,
+      roomType: roomType,
+    });
+    return await device.save();
+  }
+
+  
 }
 
 module.exports = new DeviceService(); 

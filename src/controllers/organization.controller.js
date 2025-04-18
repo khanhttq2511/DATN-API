@@ -6,7 +6,7 @@ class OrganizationController {
         try {
             const { name, userId } = req.body;
             // Assuming isAuthenticated middleware adds user to req
-            console.log("userId", userId);
+            // console.log("userId", userId);
             if (!userId) {
                  return res.status(401).json({ message: 'Authentication required.' });
             }
@@ -23,7 +23,7 @@ class OrganizationController {
     // Get organizations for the current user
     async listUserOrganizations(req, res) {
         try {
-            console.log("req.user", req.user);
+            // console.log("req.user", req.user);
             if (!req.user._id) {
                  return res.status(401).json({ message: 'Authentication required.' });
             }

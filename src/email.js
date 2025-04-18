@@ -48,7 +48,7 @@ async function sendMail(mailOptions) {
     if (!transporter) {
       await createTransporter();
     }
-    console.log("transporter", transporter);
+    // console.log("transporter", transporter);
     if (!to || !subject || !html) {
       throw new Error("Missing required fields");
     }
