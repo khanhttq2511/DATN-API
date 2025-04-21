@@ -5,7 +5,8 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "dev": "nodemon src/app.js",
+    "deploy": "node src/deploy.js"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
@@ -27,6 +28,7 @@
     "mongoose": "^8.0.3",
     "mqtt": "^5.10.4",
     "node-cron": "^3.0.3",
+    "node-ssh": "^13.2.1",
     "nodemailer": "^6.10.0",
     "path": "^0.12.7"
   },
