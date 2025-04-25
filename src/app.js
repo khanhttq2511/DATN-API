@@ -16,6 +16,7 @@ const historyRoutes = require('./routes/history.routes.js');
 const scheduleRoutes = require('./routes/schedule.routes.js');
 const { initAgenda, agenda } = require('./schedule.cron.js');
 const scheduleService = require('./services/schedule.service');
+const notifyRoutes = require('./routes/notify.routes.js');
 const app = express();
 
 // Middleware
@@ -38,7 +39,7 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-HTTP-Method-Override', 'Accept']
 }));
 
@@ -49,7 +50,7 @@ app.options('*', cors());
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', req.headers.origin);
   res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   next();
 });
@@ -67,6 +68,7 @@ app.use('/api/media', mediaRoutes);
 app.use('/api/organizations', organizationRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/schedules', scheduleRoutes);
+app.use('/api/notify', notifyRoutes);
 
 setupMQTT(app);
 initAgenda();
