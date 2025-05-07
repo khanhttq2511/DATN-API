@@ -9,8 +9,7 @@ class ScheduleService {
         try {
           // Kiểm tra thiết bị tồn tại
           const device = await DeviceService.getDeviceById(scheduleData.deviceId);
-          // console.log("device", device);
-          // console.log("scheduleData", scheduleData);
+
           if (!device) {
             throw new Error('Thiết bị không tồn tại');
           }
@@ -19,15 +18,13 @@ class ScheduleService {
           if (device.organizationId !== scheduleData.organizationId) {
             throw new Error('Bạn không có quyền truy cập thiết bị này');
           }
-          // console.log("device.organizationId", device.organizationId);
-          // console.log("scheduleData.organizationId", scheduleData.organizationId);
+
           const schedule = new Schedule({
             ...scheduleData,
             userId: scheduleData.userId,
           });
           
           agenda.schedule(schedule.scheduledTime, 'executeSchedule', { scheduleId: schedule._id, executeAt: schedule.scheduledTime});
-          // console.log("schedule", schedule);
           return await schedule.save();
 
         } catch (error) {
@@ -58,7 +55,6 @@ class ScheduleService {
   async executeSchedule({scheduleId}) {
     try {
       const schedule = await Schedule.findById(scheduleId);
-      console.log("schedule", schedule);
       const device = await DeviceService.getDeviceById(schedule.deviceId);
       
       if (!device) {
@@ -67,8 +63,6 @@ class ScheduleService {
 
       // Cập nhật trạng thái thiết bị
       await DeviceService.updateDeviceStatus(schedule.deviceId, schedule.status, schedule.roomType);
-      // console.log("schedule.status", schedule.status);
-      // console.log("schedule.deviceId", schedule.deviceId);  
       // Gửi thông báo để cập nhật thiết bị
       let formattoPub = {
         roomId: schedule.roomId,

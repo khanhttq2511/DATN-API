@@ -14,13 +14,19 @@ const router = express.Router();
 // --- Organization CRUD ---
 router.post('/', protect, organizationController.create); // Tạo tổ chức mới
 router.get('/', protect, organizationController.listUserOrganizations); // Lấy các tổ chức của tôi
-router.get('/:orgId', organizationController.getDetails); // Lấy chi tiết tổ chức (service sẽ kiểm tra quyền thành viên)
-router.put('/:orgId', organizationController.updateName); // Cập nhật tên (service kiểm tra owner)
-router.delete('/:orgId', organizationController.remove); // Xóa tổ chức (service kiểm tra owner)
+router.get('/:orgId', protect, organizationController.getDetails); // Lấy chi tiết tổ chức (service sẽ kiểm tra quyền thành viên)
+router.get('/:orgId/owner', protect, organizationController.getOrganizationOwner); // Lấy thông tin chủ sở hữu tổ chức
+router.put('/:orgId', protect, organizationController.updateName); // Cập nhật tên (service kiểm tra owner)
+router.delete('/:orgId', protect, organizationController.remove); // Xóa tổ chức (service kiểm tra owner)
 
 // --- Member Management ---
-router.post('/:orgId/members', organizationController.addMember); // Thêm thành viên (service kiểm tra owner)
-router.delete('/:orgId/members/:userIdToDelete', organizationController.removeMember); // Xóa thành viên (service kiểm tra owner)
-router.put('/:orgId/members/:userIdToUpdate', organizationController.updateMemberRole); // Cập nhật vai trò (service kiểm tra owner)
+router.post('/:orgId/members', protect, organizationController.addMember); // Thêm thành viên (service kiểm tra owner)
+router.delete('/:orgId/members/:userIdToDelete', protect, organizationController.removeMember); // Xóa thành viên (service kiểm tra owner)
+router.put('/:orgId/members/:userIdToUpdate', protect, organizationController.updateMemberRole); // Cập nhật vai trò (service kiểm tra owner)
+
+// --- Invitation Management ---
+router.post('/invitations/accept', protect, organizationController.acceptInvitation); // Chấp nhận lời mời
+router.post('/invitations/reject', protect, organizationController.rejectInvitation); // Từ chối lời mời
+router.get('/invitations/pending', protect, organizationController.getPendingInvitations); // Lấy danh sách lời mời đang chờ
 
 module.exports = router; 

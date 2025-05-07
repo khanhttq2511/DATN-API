@@ -20,8 +20,8 @@ const memberSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['accepted', 'rejected', 'joined'],
-    default: 'joined',
+    enum: ['rejected', 'joined', 'pending'],
+    default: 'pending',
   },
   email: {
     type: String,
@@ -70,14 +70,6 @@ const organizationSchema = new mongoose.Schema(
   }
 );
 
-// --- Các phần bị loại bỏ để giống user.model.js ---
-// 1. Virtual 'owner' đã bị loại bỏ.
-// 2. Các định nghĩa index tường minh (organizationSchema.index(...)) đã bị loại bỏ.
-//    (Bạn vẫn nên tạo index trực tiếp trong database hoặc dùng cách khác).
-// 3. Middleware pre('save') để tự động thêm/xác thực owner trong members đã bị loại bỏ.
-//    => ***QUAN TRỌNG:*** Logic này phải được chuyển sang OrganizationService.createOrganization
-//       trước khi gọi newOrganization.save(). Bạn cần đảm bảo `members` array
-//       được khởi tạo đúng cách với owner trong service.
 
 // Export model theo style của user.model.js
 module.exports = mongoose.model('Organization', organizationSchema); 

@@ -77,7 +77,7 @@ class OrganizationService {
     }
 
     /**
-     * Finds all organizations a specific user is a member of.
+     * Finds all organizations where the user is in the members array.
      * @param {string} userId - The ID of the user.
      * @returns {Promise<Array<object>|object>} A list of organizations or an error object.
      */
@@ -86,15 +86,17 @@ class OrganizationService {
             return { status: 400, message: 'User ID is required.' };
         }
         try {
-            
-            const organizations = await Organization.find({ 'members.userId': userId })
-                .populate('ownerId', 'name email')
-                // .populate('members.userId', 'name email')
-                .sort({ createdAt: -1 });
+            // Tìm các tổ chức mà user nằm trong mảng members (không quan tâm status)
+            const organizations = await Organization.find({ 
+                "members.userId": userId
+            })
+            .populate('ownerId', 'name email')
+            .sort({ createdAt: -1 });
+
             return organizations;
         } catch (error) {
-             console.error("Error fetching organizations by user:", error);
-             return { status: 500, message: 'Error fetching organizations.' };
+            console.error("Error fetching organizations by user:", error);
+            return { status: 500, message: 'Error fetching organizations.' };
         }
     }
 
@@ -118,11 +120,23 @@ class OrganizationService {
                 return { status: 404, message: 'Organization not found.' };
             }
 
-            // Verify requesting user is a member
-            const isMember = organization.members.some(member => member.userId && member.userId._id.equals(requestingUserId));
-            if (!isMember) {
-                // Important: Use return here, not throw
+            // Verify requesting user is a member with valid status
+            const member = organization.members.find(member => 
+                member.userId && member.userId._id.equals(requestingUserId)
+            );
+            
+            if (!member) {
                 return { status: 403, message: 'Forbidden: You are not a member of this organization.' };
+            }
+            
+            // Kiểm tra trạng thái thành viên, chỉ cho phép truy cập khi status là 'joined'
+            if (member.status !== 'joined') {
+                return { 
+                    status: 403, 
+                    message: 'Forbidden: Your membership is pending or has been rejected.', 
+                    pendingInvitation: member.status === 'pending',
+                    organizationName: organization.name
+                };
             }
 
             return organization;
@@ -213,7 +227,7 @@ class OrganizationService {
     /**
      * Adds a new member to an organization. Only the owner can add members.
      * @param {string} orgId - The ID of the organization.
-     * @param {string} userIdToAdd - The ID of the user to add.
+     * @param {string} email - The email of the user to add.
      * @param {string} role - The role to assign ('member').
      * @param {string} requestingUserId - The ID of the user attempting to add the member.
      * @returns {Promise<object>} The updated organization document or an error object.
@@ -243,19 +257,25 @@ class OrganizationService {
                  return { status: 404, message: 'User to add not found.' };
             }
 
+            // Kiểm tra xem người dùng đã là thành viên của tổ chức chưa, 
             const isAlreadyMember = organization.members.some(member => member.userId && member.userId.equals(userToAdd._id));
             if (isAlreadyMember) {
                 return { status: 409, message: 'User is already a member of this organization.' };
             }
 
-            // Add the member
-            organization.members.push({ userId: userToAdd._id, role , email: userToAdd.email, status: 'joined', avatarURL: userToAdd.avatarURL, username: userToAdd.username });
+            // Add the member with status 'pending' (waiting for acceptance)
+            organization.members.push({ 
+                userId: userToAdd._id, 
+                role, 
+                email: userToAdd.email, 
+                status: 'pending', // Changed from 'joined' to 'pending'
+                avatarURL: userToAdd.avatarURL, 
+                username: userToAdd.username 
+            });
             await organization.save(); // Use save to run schema validations on members array
 
-            // Update the added user's document
-            await User.findByIdAndUpdate(userToAdd._id, {
-                $addToSet: { organizations: { organizationId: orgId, role: role, email: userToAdd.email, status: 'joined', avatarURL: userToAdd.avatarURL, username: userToAdd.username } }
-            }, { new: true });
+            // Don't update the invited user's document with the organization yet
+            // They'll be added only after accepting the invitation
 
             // Return updated org with populated members
             await organization.populate('members.userId', 'name email');
@@ -295,7 +315,6 @@ class OrganizationService {
             if (organization.ownerId.equals(userIdToRemove)) {
                 return { status: 400, message: 'Owner cannot remove themselves. To delete the organization, use the delete endpoint.' };
             }
-
             const memberIndex = organization.members.findIndex(member => member.userId && member.userId.equals(userIdToRemove));
             if (memberIndex === -1) {
                 return { status: 404, message: 'Member not found in this organization.' };
@@ -394,6 +413,151 @@ class OrganizationService {
         } catch (error) {
              console.error("Error updating member role:", error);
              return { status: 500, message: 'Error updating member role.' };
+        }
+    }
+
+    /**
+     * Chấp nhận lời mời tham gia tổ chức
+     * @param {string} organizationId - ID của tổ chức
+     * @param {string} inviteeId - ID của người được mời
+     * @returns {Promise<object>} - Tổ chức đã cập nhật hoặc lỗi
+     */
+    async acceptInvitation(organizationId, inviteeId) {
+        if (!organizationId || !inviteeId) {
+            throw createError(400, 'Thiếu thông tin tổ chức hoặc người dùng.');
+        }
+        
+        try {
+            // Tìm tổ chức
+            const organization = await Organization.findById(organizationId);
+            if (!organization) {
+                throw createError(404, 'Không tìm thấy tổ chức.');
+            }
+            
+            // Tìm người dùng
+            const user = await User.findById(inviteeId);
+            if (!user) {
+                throw createError(404, 'Không tìm thấy người dùng.');
+            }
+            
+            // Kiểm tra xem người dùng có trong danh sách thành viên chưa
+            const memberIndex = organization.members.findIndex(
+                member => member.userId.toString() === inviteeId.toString() && member.status === 'pending'
+            );
+            
+            if (memberIndex === -1) {
+                throw createError(400, 'Người dùng không có trong danh sách được mời hoặc đã chấp nhận/từ chối trước đó.');
+            }
+            
+            // Cập nhật trạng thái thành viên thành 'joined' thay vì 'accepted'
+            organization.members[memberIndex].status = 'joined';
+            await organization.save();
+            
+            // Cập nhật thông tin tổ chức trong user document
+            await User.findByIdAndUpdate(inviteeId, {
+                $addToSet: { 
+                    organizations: { 
+                        organizationId: organization._id, 
+                        role: 'member', 
+                        status: 'joined', // Thay đổi từ 'accepted' thành 'joined'
+                        email: user.email,
+                        avatarURL: user.avatarURL,
+                        username: user.username
+                    } 
+                }
+            }, { new: true });
+            
+            return organization;
+        } catch (error) {
+            console.error('Error accepting invitation:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Từ chối lời mời tham gia tổ chức
+     * @param {string} organizationId - ID của tổ chức
+     * @param {string} inviteeId - ID của người được mời
+     * @returns {Promise<object>} - Kết quả thao tác
+     */
+    async rejectInvitation(organizationId, inviteeId) {
+        if (!organizationId || !inviteeId) {
+            throw createError(400, 'Thiếu thông tin tổ chức hoặc người dùng.');
+        }
+        
+        try {
+            // Tìm tổ chức
+            const organization = await Organization.findById(organizationId);
+            if (!organization) {
+                throw createError(404, 'Không tìm thấy tổ chức.');
+            }
+            
+            // Cập nhật trạng thái thành viên thành 'rejected'
+            const memberIndex = organization.members.findIndex(
+                member => member.userId.toString() === inviteeId.toString()
+            );
+            
+            if (memberIndex === -1) {
+                throw createError(400, 'Người dùng không có trong danh sách được mời.');
+            }
+            
+            organization.members[memberIndex].status = 'rejected';
+            await organization.save();
+            
+            // Cập nhật trạng thái trong user document nếu cần
+            await User.findByIdAndUpdate(
+                inviteeId,
+                {
+                    $pull: { organizations: { organizationId: organization._id } }
+                },
+                { new: true }
+            );
+            
+            return { success: true };
+        } catch (error) {
+            console.error('Error rejecting invitation:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Lấy danh sách các lời mời đang chờ xử lý cho một người dùng
+     * @param {string} userId - ID của người dùng
+     * @returns {Promise<Array>} Danh sách các tổ chức đang mời
+     */
+    async getPendingInvitations(userId) {
+        if (!userId) {
+            throw createError(400, 'User ID is required.');
+        }
+        
+        try {
+            // Tìm các tổ chức mà người dùng có trong danh sách thành viên với trạng thái 'pending'
+            const organizations = await Organization.find({
+                'members.userId': userId,
+                'members.status': 'pending'
+            })
+            .populate('ownerId', 'name email username avatarURL')
+            .sort({ createdAt: -1 });
+            
+            return organizations.map(org => {
+                // Tìm thông tin thành viên trong tổ chức
+                const memberInfo = org.members.find(member => 
+                    member.userId.toString() === userId.toString()
+                );
+                
+                return {
+                    organizationId: org._id,
+                    organizationName: org.name,
+                    ownerId: org.ownerId._id,
+                    ownerName: org.ownerId.username || org.ownerId.email,
+                    ownerAvatar: org.ownerId.avatarURL,
+                    invitedAt: memberInfo ? memberInfo.joinedAt : null,
+                    role: memberInfo ? memberInfo.role : 'member'
+                };
+            });
+        } catch (error) {
+            console.error('Error fetching pending invitations:', error);
+            throw error;
         }
     }
 }

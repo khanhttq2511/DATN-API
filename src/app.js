@@ -1,9 +1,11 @@
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
 
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const { setupMQTT } = require('./config/mqtt');
+const setupSocket = require('./config/socket');
 require('dotenv').config();
 
 const userRoutes = require('./routes/user.routes.js');
@@ -11,13 +13,17 @@ const roomRoutes = require('./routes/room.routes.js');
 const deviceRoutes = require('./routes/device.routes.js');
 const sensorRoutes = require('./routes/sensor.routes.js');
 const mediaRoutes = require('./routes/media.routes.js');
+const contactRoutes = require('./routes/contact.routes.js');
 const organizationRoutes = require('./routes/organization.routes.js');
 const historyRoutes = require('./routes/history.routes.js');
 const scheduleRoutes = require('./routes/schedule.routes.js');
 const { initAgenda, agenda } = require('./schedule.cron.js');
 const scheduleService = require('./services/schedule.service');
 const notifyRoutes = require('./routes/notify.routes.js');
+const { ServerApiVersion } = require('mongodb');
 const app = express();
+const server = http.createServer(app);
+
 
 // Middleware
 app.use(cors({
@@ -27,6 +33,7 @@ app.use(cors({
       'https://api.velthome.online',
       'https://smarthome-henna.vercel.app', 
       'https://www.smarthome-henna.vercel.app',
+      'http://localhost:3001',
       'http://localhost:3000'
     ];
     // Cho phép các yêu cầu không có nguồn gốc (như ứng dụng di động, yêu cầu curl)
@@ -69,7 +76,11 @@ app.use('/api/organizations', organizationRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/notify', notifyRoutes);
+app.use('/api/contact', contactRoutes);
 
+
+const io = setupSocket(server);
+global.io = io;
 setupMQTT(app);
 initAgenda();
 app.set('agenda', agenda);
@@ -79,7 +90,6 @@ app.set('agenda', agenda);
   agenda.define("executeSchedule", async (job) => {
       const now = new Date();
       const scheduleData = job.attrs.data;
-      // console.log("scheduleData", scheduleData);
       const executeAt = new Date(scheduleData.executeAt);
 
       // Chỉ thực thi nếu đã đến hoặc qua thời gian executeAt
@@ -104,6 +114,6 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT} and`);
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 }); 

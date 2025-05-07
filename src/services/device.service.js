@@ -84,7 +84,6 @@ class DeviceService {
   async toggleStatus(id, status, roomType, user) {
     try {
       const device = await Device.findById(id);
-      // console.log("device", device);
       if (!device) {
         throw new Error('Device not found');
     }
@@ -110,7 +109,6 @@ class DeviceService {
       status: device.status === 'active' ,
       roomType: roomType
     }
-    // console.log(formattoPub);
     //format send topic 
     const topic = `devices-down`;
     sendMessageToTopic(topic, formattoPub);
@@ -123,7 +121,6 @@ class DeviceService {
 
   async updateDeviceStatusAfterConnected(roomId, type, status,roomType) {
     const device = await Device.findOne({ roomId: roomId, type: type });
-    // console.log("device", device);
     if (!device) {
       throw new Error('Device not found');
     }
@@ -141,7 +138,25 @@ class DeviceService {
     return await device.save();
   }
 
-  
+  async updateDeviceActive(roomId, isActive, orgId) {
+    if (!roomId) {
+      throw new Error('Room ID is required');
+    }
+    
+    if (!orgId) {
+      throw new Error('Organization ID is required');
+    }
+    
+    // Cập nhật tất cả thiết bị trong phòng đã chọn và thuộc tổ chức đó
+    const result = await Device.updateMany(
+      { 
+        roomId: roomId,
+        organizationId: orgId 
+      },
+      { $set: { isActive: isActive } }
+    );
+    return result;
+  }
 }
 
 module.exports = new DeviceService(); 

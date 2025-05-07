@@ -48,7 +48,6 @@ async function sendMail(mailOptions) {
     if (!transporter) {
       await createTransporter();
     }
-    // console.log("transporter", transporter);
     if (!to || !subject || !html) {
       throw new Error("Missing required fields");
     }
@@ -67,8 +66,39 @@ async function sendMail(mailOptions) {
     throw error;
   }
 }
+
+// Hàm gửi email có thể được tái sử dụng
+async function sendMailContact(mailOptions) {
+  try {
+    const { email, subject, html } = mailOptions;
+    // Đảm bảo transporter đã được khởi tạo
+    if (!transporter) {
+      await createTransporter();
+    }
+    
+    if (!email || !subject || !html) {
+      throw new Error("Missing required fields");
+    }
+    
+    // Nếu không cung cấp mailOptions, sử dụng mặc định
+    const options = {
+      from: process.env.MY_EMAIL || "",
+      to: process.env.SUPPORT_EMAIL || "",
+      subject: subject || "",
+      replyTo: email,
+      html: html || "",
+    };
+
+    const result = await transporter.sendMail(options);
+    return "Email sent successfully";
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw error;
+  }
+}
 // Xuất các hàm để sử dụng ở các file khác
 module.exports = {
   createTransporter,
   sendMail,
+  sendMailContact
 };

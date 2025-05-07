@@ -67,6 +67,14 @@ class SensorController {
       res.status(500).json({ message: error.message });
     }
   }
+  async updateSensorActive(req, res) {
+    try {
+      const sensor = await sensorService.updateSensorActive(req.body.id, req.body.isActive);
+      res.json(sensor);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
 }
 
 module.exports = new SensorController(); 

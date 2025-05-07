@@ -21,9 +21,8 @@ class NotifyController {
     // Lấy tất cả thông báo cho một người dùng
     async getUserNotifications(req, res) {
         try {
-            console.log("Request headers:", req.headers);
-            console.log("Request user:", req.user);
-            
+
+                
             if (!req.user || !req.user._id) {
                 return res.status(401).json({
                     success: false,
@@ -32,10 +31,8 @@ class NotifyController {
             }
             
             const userId = req.user._id;
-            console.log("Finding notifications for userId:", userId);
-            
+
             const notifications = await notifyService.getNotify({ userId });
-            console.log("Found notifications count:", notifications.length);
             
             res.status(200).json({
                 success: true,
@@ -232,7 +229,6 @@ class NotifyController {
     // Đánh dấu tất cả thông báo là đã đọc cho một người dùng
     async markAllAsRead(req, res) {
         try {
-            console.log("Request user:", req.user);
             
             if (!req.user || !req.user._id) {
                 return res.status(401).json({
@@ -242,7 +238,6 @@ class NotifyController {
             }
             
             const userId = req.user._id;
-            console.log("Marking all notifications as read for userId:", userId);
             
             const result = await notifyService.markAllAsRead(userId);
             
@@ -291,20 +286,9 @@ class NotifyController {
             }
             
             // Kiểm tra và cung cấp giá trị mặc định cho roomName và roomType nếu thiếu
-            const validRoomName = roomName || `Phòng ${roomId}`;
-            const validRoomType = roomType || 'other';
-            
-            // Ghi log nếu phải sử dụng giá trị mặc định
-            if (!roomName || !roomType) {
-                console.warn('Cảnh báo: Sử dụng giá trị mặc định cho thông tin phòng:', {
-                    roomId,
-                    originalRoomName: roomName,
-                    originalRoomType: roomType,
-                    validRoomName,
-                    validRoomType
-                });
-            }
-            
+            const validRoomName = roomName ;
+            const validRoomType = roomType ;
+                       
             const sensorData = {
                 sensorType,
                 sensorId,
@@ -316,13 +300,14 @@ class NotifyController {
                 roomType: validRoomType
             };
             
+            // Chỉ tạo thông báo cho các thành viên có trạng thái 'joined' trong tổ chức
             const notifications = await notifyService.createSensorAlertNotification(organizationId, sensorData);
             
-            // Nếu không có thông báo nào được tạo (giá trị không vượt ngưỡng)
+            // Nếu không có thông báo nào được tạo (giá trị không vượt ngưỡng hoặc không có thành viên phù hợp)
             if (!notifications || notifications.length === 0) {
                 return res.status(200).json({
                     success: true,
-                    message: 'Không cần tạo thông báo, giá trị cảm biến trong ngưỡng cho phép',
+                    message: 'Không cần tạo thông báo, giá trị cảm biến trong ngưỡng cho phép hoặc không có thành viên phù hợp',
                     data: []
                 });
             }

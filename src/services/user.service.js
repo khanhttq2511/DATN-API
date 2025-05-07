@@ -187,7 +187,6 @@ class UserService {
     }
   
     const token = generateToken(user);
-    console.log(token);
     return {
       token,
     };

@@ -22,21 +22,14 @@ const setupMQTT = (app) => {
     (client) => {
       console.log("🚀 Kết nối MQTT thành công!");
 
-      mqttService.subscribe("connected", (err) => {
+
+      mqttService.subscribe("esp32/status", (err) => {
         if (err) {
-          console.error("❌ Lỗi khi đăng ký topic connected:", err);
+          console.error("❌ Lỗi khi đăng ký topic esp32/status:", err);
         } else {
-          console.log("✅ Đăng ký topic connected thành công");
+          console.log("✅ Đăng ký topic esp32/status thành công");
         }
       });
-
-      // mqttService.subscribe("esp32/status", (err) => {
-      //   if (err) {
-      //     console.error("❌ Lỗi khi đăng ký topic esp32/status:", err);
-      //   } else {
-      //     console.log("✅ Đăng ký topic esp32/status thành công");
-      //   }
-      // });
 
       mqttService.subscribe("devices-up", (err) => {
         if (err) {
@@ -59,8 +52,7 @@ const setupMQTT = (app) => {
         }
         if(topic === "devices-up") {
           if (!message.toString()) return;
-          console.log("parse", JSON.parse(message.toString()));
-
+          
           const parsedSensorsData = JSON.parse(message.toString());
           const roomId = parsedSensorsData.roomId;
           const type = parsedSensorsData.type;
@@ -73,22 +65,21 @@ const setupMQTT = (app) => {
             status,
             roomType
           );
-          console.log(message.toString())
 
           // client.publish(message.toString(), JSON.stringify(formatToPub));
         }
-        // if (topic === "esp32/status") {
-        //   if (!message.toString()) return;
-        //   const parsedSensorsData = JSON.parse(message.toString());
-        //   const orgId = parsedSensorsData.orgId;
-        //   const roomId = parsedSensorsData.roomId;
-        //   const data = parsedSensorsData.data;
-        //   console.log("data", data);
-        //   console.log("orgId", orgId);
-        //   sensorService.updateSensorStatus(roomId, orgId, data);
+        if (topic === "esp32/status") {
+          if (!message.toString()) return;
+          const parsedSensorsData = JSON.parse(message.toString());
+          const orgId = parsedSensorsData.orgId;
+          const roomId = parsedSensorsData.roomId;
+          const isActive = parsedSensorsData.isActive;
 
-        //   // client.publish(message.toString(), JSON.stringify(formatToPub));
-        // }
+          deviceService.updateDeviceActive(roomId, isActive, orgId);
+          sensorService.updateSensorActive(roomId, isActive, orgId);
+
+          // client.publish(message.toString(), JSON.stringify(formatToPub));
+        }
       });
     },
     (error) => {

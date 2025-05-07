@@ -24,7 +24,7 @@ const deviceSchema = new mongoose.Schema({
     type: String,
     required: false // để tạo device cho admin
   },
-  isAdmin: {
+  isActive: {
     type: Boolean,
     required: false,
     default: false

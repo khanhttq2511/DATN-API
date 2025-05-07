@@ -31,7 +31,6 @@ const initAgenda = async () => {
   await agenda.start();
   console.log("📅 Agenda started & ready to process jobs");
   const jobs = await agenda.jobs({});
-  // console.log("jobs", jobs);
 };
 
 

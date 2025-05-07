@@ -1,20 +1,43 @@
 const Sensor = require('../models/sensor.model');
+const threshold = require('../config/threshold');
+const notificationService = require('./notify.service');
+const roomService = require('./room.service');
 
 class SensorService {
   async createSensor(sensorData) {
-    if(sensorData.type === 'temperature'){
-      sensorData.unit = '°C';
-    }else if(sensorData.type === 'humidity'){
-      sensorData.unit = '%';
+    const room = await roomService.getRoomById(sensorData.organizationId, sensorData.roomId);
+    sensorData.roomName = room.name;
+    if(sensorData.type === 'dht'){
+      
+      const temperature = sensorData.value.temperature;
+      const humidity = sensorData.value.humidity;
+      if(temperature > threshold.temperature.min){
+        sensorData.unit = '°C';
+        notificationService.createSensorAlertNotification(sensorData.organizationId, sensorData);
+      }
+      if(humidity > threshold.humidity.min){
+        sensorData.unit = '%';
+        notificationService.createSensorAlertNotification(sensorData.organizationId, sensorData);
+      }
+    }else if(sensorData.type === 'gas'){
+      const ppm = sensorData.value.ppm;
+      sensorData.unit = 'ppm';
+      if(ppm > threshold.ppm.min){
+        notificationService.createSensorAlertNotification(sensorData.organizationId, sensorData);
+      }
     }else if(sensorData.type === 'light'){
+      const light = sensorData.value.light;
       sensorData.unit = 'lux';
+      if(light < threshold.light.min ){
+        notificationService.createSensorAlertNotification(sensorData.organizationId, sensorData);
+      }
     }
     const sensor = new Sensor(sensorData);
     return await sensor.save();
   }
 
   async getAllSensors(roomId, organizationId) {
-    return await Sensor.find({ roomId, organizationId });
+    return await Sensor.find({ roomId, organizationId }).sort({ createdAt: -1 });
   }
 
   async getSensorById(roomId, organizationId) {
@@ -44,44 +67,27 @@ class SensorService {
       { new: true }
     );
   }
-  
-  // async updateSensorStatus(roomId, orgId, data) {
-  //   if(!data || !roomId || !orgId) return;
-  //   console.log("data update", data);
-  //   console.log("roomId", roomId);
-  //   if(data.humi !== "error" || data.humi !== undefined){
-  //     const sensor = await Sensor.findOneAndUpdate({ roomId: roomId, type: "dht", organizationId: orgId }, { isConnected: true, 'value.humidity': data.humi }, { new: true });
-  //     if (!sensor) {
-  //       const newSensor = new Sensor({ roomId: roomId, type: "dht", organizationId: orgId, isConnected: true, 'value.humidity': data.humi });
-  //       await newSensor.save();
-  //       console.log("sensor", newSensor);
-  //     }
-  //   }
-  //   if(data.ppm !== "error" || data.ppm !== undefined){
-  //     const sensor = await Sensor.findOneAndUpdate({ roomId: roomId, type: "gas", organizationId: orgId }, { isConnected: true, 'value.ppm': data.ppm }, { new: true });
-  //     if (!sensor) {
-  //       const newSensor = new Sensor({ roomId: roomId, type: "gas", organizationId: orgId, isConnected: true, 'value.ppm': data.ppm });
-  //       await newSensor.save();
-  //       console.log("sensor", newSensor);
-  //     }
-  //   }
-  //   if(data.temp !== "error" || data.temp !== undefined){
-  //     const sensor = await Sensor.findOneAndUpdate({ roomId: roomId, type: "dht", organizationId: orgId }, { isConnected: true, 'value.temperature': data.temp }, { new: true });
-  //     if (!sensor) {
-  //       const newSensor = new Sensor({ roomId: roomId, type: "dht", organizationId: orgId, isConnected: true, 'value.temperature': data.temp });
-  //       await newSensor.save();
-  //       console.log("sensor", newSensor);
-  //     }
-  //   }
-  //   if(data.light !== "error" || data.light !== undefined){
-  //     const sensor = await Sensor.findOneAndUpdate({ roomId: roomId, type: "light", organizationId: orgId }, { isConnected: true, 'value.light': data.light }, { new: true });
-  //     if (!sensor) {
-  //       const newSensor = new Sensor({ roomId: roomId, type: "light", organizationId: orgId, isConnected: true, 'value.light': data.light });
-  //       await newSensor.save();
-  //       console.log("sensor", newSensor);
-  //     }
-  //   }
-  // }
+
+  async updateSensorActive(roomId, isActive, orgId) {
+    if (!roomId) {
+      throw new Error('Room ID is required');
+    }
+    
+    if (!orgId) {
+      throw new Error('Organization ID is required');
+    }
+    
+    // Cập nhật tất cả thiết bị trong phòng đã chọn và thuộc tổ chức đó
+    const result = await Sensor.updateMany(
+      { 
+        roomId: roomId,
+        organizationId: orgId 
+      },
+      { $set: { isActive: isActive } }
+    );
+    return result;
+  }
+
 }
 
 module.exports = new SensorService(); 

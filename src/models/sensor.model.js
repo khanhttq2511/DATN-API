@@ -25,10 +25,11 @@ const sensorSchema = new mongoose.Schema({
     ref: 'Organization',
     required: true
   },
-  // isConnected: {
-  //   type: Boolean,
-  //   default: false
-  // },
+  isActive: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
 },{timestamps: true});
 
 module.exports = mongoose.model('Sensor', sensorSchema); 

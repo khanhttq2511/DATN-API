@@ -1,5 +1,6 @@
 const Notify = require('../models/notify.model');
 const Organization = require('../models/organization.model');
+const User = require('../models/user.model');
 
 class NotifyService {
   async createNotify(notify) {
@@ -94,34 +95,31 @@ class NotifyService {
   // Tạo thông báo cho tất cả thành viên trong tổ chức khi cảm biến vượt ngưỡng
   async createSensorAlertNotification(organizationId, sensorData) {
     try {
-      console.log("sensorData", sensorData)
       // Lấy thông tin tổ chức
       const organization = await Organization.findById(organizationId);
       if (!organization) {
         throw new Error('Không tìm thấy tổ chức');
       }
-
+      global.io.emit('newNotification', sensorData);
       // Xác định loại thông báo và nội dung dựa trên loại cảm biến và giá trị
       let title = '';
       let content = '';
       let type = 'warning';
 
-      switch(sensorData.sensorType) {
-        case 'temperature':
-          if (sensorData.value >= 32) {
+      switch(sensorData.type) {
+        case 'dht':
+          if (sensorData.value.temperature >= 32) {
             title = 'Cảnh báo nhiệt độ cao';
-            content = `Nhiệt độ đã đạt mức ${sensorData.value}${sensorData.unit} tại ${sensorData.roomName}`;
+            content = `Nhiệt độ đã đạt mức ${sensorData.value.temperature}${sensorData.unit} tại ${sensorData.roomName}`;
             type = 'warning';
-          } else if (sensorData.value <= 18) {
+          } else if (sensorData.value.temperature <= 18) {
             title = 'Cảnh báo nhiệt độ thấp';
-            content = `Nhiệt độ đã giảm xuống ${sensorData.value}${sensorData.unit} tại ${sensorData.roomName}`;
+            content = `Nhiệt độ đã giảm xuống ${sensorData.value.temperature}${sensorData.unit} tại ${sensorData.roomName}`;
             type = 'warning';
           }
-          break;
-        case 'humidity':
-          if (sensorData.value > 75) {
+          if (sensorData.value.humidity > 75) {
             title = 'Cảnh báo độ ẩm cao';
-            content = `Độ ẩm đã đạt mức ${sensorData.value}${sensorData.unit} tại ${sensorData.roomName}`;
+            content = `Độ ẩm đã đạt mức ${sensorData.value.humidity}${sensorData.unit} tại ${sensorData.roomName}`;
             type = 'warning';
           } else if (sensorData.value < 40) {
             title = 'Cảnh báo độ ẩm thấp';
@@ -129,7 +127,7 @@ class NotifyService {
             type = 'warning';
           }
           break;
-        case 'ppm':
+        case 'gas':
           if (sensorData.value > 800) {
             title = 'Cảnh báo khí gas nguy hiểm';
             content = `Nồng độ khí gas đã đạt mức nguy hiểm ${sensorData.value}${sensorData.unit} tại ${sensorData.roomName}`;
@@ -140,7 +138,7 @@ class NotifyService {
             type = 'warning';
           }
           break;
-        case 'lightLevel':
+        case 'light':
           if (sensorData.value < 100) {
             title = 'Cảnh báo thiếu ánh sáng';
             content = `Cường độ ánh sáng quá thấp ${sensorData.value}${sensorData.unit} tại ${sensorData.roomName}`;
@@ -160,9 +158,16 @@ class NotifyService {
       if (!title || !content) {
         return null;
       }
+      // Chỉ tạo thông báo cho các thành viên có trạng thái 'joined' trong tổ chức
+      const activeMembers = organization.members.filter(member => member.status === 'joined');
 
-      // Tạo danh sách thông báo cho tất cả thành viên trong tổ chức
-      const notifications = organization.members.map(member => ({
+      if (activeMembers.length === 0) {
+        console.log('Không có thành viên nào có trạng thái joined trong tổ chức');
+        return [];
+      }
+
+      // Tạo danh sách thông báo cho các thành viên tích cực
+      const notifications = activeMembers.map(member => ({
         userId: member.userId,
         type,
         title,
@@ -173,6 +178,7 @@ class NotifyService {
         sensorValue: sensorData.value.toString(),
         roomId: sensorData.roomId,
         roomType: sensorData.roomType,
+        organizationId: organizationId,
         isRead: false
       }));
 
@@ -187,6 +193,85 @@ class NotifyService {
       return await Notify.insertMany(notifications);
     } catch (error) {
       console.error('Lỗi khi tạo thông báo cho các thành viên tổ chức:', error);
+      throw error;
+    }
+  }
+
+  // Tạo thông báo mời tham gia tổ chức
+  async createInviteNotification(inviteeEmail, organizationId, inviterId) {
+    try {
+      // Lấy thông tin tổ chức
+      const organization = await Organization.findById(organizationId);
+      if (!organization) {
+        throw new Error('Không tìm thấy tổ chức');
+      }
+
+      // Lấy thông tin người mời
+      const inviter = await User.findById(inviterId);
+      if (!inviter) {
+        throw new Error('Không tìm thấy người dùng mời');
+      }
+
+      // Tìm người dùng từ email được mời
+      const invitee = await User.findOne({ email: inviteeEmail });
+      if (!invitee) {
+        throw new Error('Không tìm thấy người dùng với email này');
+      }
+
+      // Tạo thông báo cho người được mời
+      const notification = {
+        userId: invitee._id,
+        type: 'invite',
+        title: 'Lời mời tham gia tổ chức',
+        content: `Bạn được mời tham gia tổ chức "${organization.name}"`,
+        isRead: false,
+        inviteDetails: {
+          organizationId: organization._id,
+          organizationName: organization.name,
+          inviterId: inviter._id,
+          inviterName: inviter.username || inviter.email,
+          role: 'member' // Luôn đặt role là 'member'
+        },
+        organizationId: organizationId
+      };
+
+      return await Notify.create(notification);
+    } catch (error) {
+      console.error('Lỗi khi tạo thông báo mời:', error);
+      throw error;
+    }
+  }
+
+  // Tạo thông báo phản hồi lời mời (chấp nhận hoặc từ chối)
+  async createInviteResponseNotification(organizationId, inviteeId, inviterId, accepted) {
+    try {
+      // Lấy thông tin tổ chức
+      const organization = await Organization.findById(organizationId);
+      if (!organization) {
+        throw new Error('Không tìm thấy tổ chức');
+      }
+
+      // Lấy thông tin người được mời
+      const invitee = await User.findById(inviteeId);
+      if (!invitee) {
+        throw new Error('Không tìm thấy người dùng được mời');
+      }
+
+      // Tạo thông báo cho người mời
+      const notification = {
+        userId: inviterId,
+        type: accepted ? 'success' : 'info',
+        title: accepted ? 'Lời mời đã được chấp nhận' : 'Lời mời đã bị từ chối',
+        content: accepted 
+          ? `${invitee.username || invitee.email} đã chấp nhận lời mời tham gia tổ chức "${organization.name}"`
+          : `${invitee.username || invitee.email} đã từ chối lời mời tham gia tổ chức "${organization.name}"`,
+        isRead: false,
+        organizationId: organizationId
+      };
+
+      return await Notify.create(notification);
+    } catch (error) {
+      console.error('Lỗi khi tạo thông báo phản hồi lời mời:', error);
       throw error;
     }
   }

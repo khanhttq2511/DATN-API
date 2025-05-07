@@ -54,6 +54,10 @@ const notifySchema = new mongoose.Schema({
         type: String,
         required: false
     },
+    organizationId: {
+        type: String,
+        required: true
+    },
 }, { timestamps: true });
 
 const Notify = mongoose.model('Notify', notifySchema);
