@@ -105,6 +105,7 @@ class NotifyService {
       let title = '';
       let content = '';
       let type = 'warning';
+      let sensorType = '';
 
       switch(sensorData.type) {
         case 'dht':
@@ -112,19 +113,23 @@ class NotifyService {
             title = 'Cảnh báo nhiệt độ cao';
             content = `Nhiệt độ đã đạt mức ${sensorData.value.temperature}${sensorData.unit} tại ${sensorData.roomName}`;
             type = 'warning';
+            sensorData.sensorType = 'temperature';
           } else if (sensorData.value.temperature <= 18) {
             title = 'Cảnh báo nhiệt độ thấp';
             content = `Nhiệt độ đã giảm xuống ${sensorData.value.temperature}${sensorData.unit} tại ${sensorData.roomName}`;
             type = 'warning';
+            sensorData.sensorType = 'temperature';
           }
           if (sensorData.value.humidity > 75) {
             title = 'Cảnh báo độ ẩm cao';
             content = `Độ ẩm đã đạt mức ${sensorData.value.humidity}${sensorData.unit} tại ${sensorData.roomName}`;
             type = 'warning';
+            sensorData.sensorType = 'humidity';
           } else if (sensorData.value < 40) {
             title = 'Cảnh báo độ ẩm thấp';
             content = `Độ ẩm đã giảm xuống ${sensorData.value}${sensorData.unit} tại ${sensorData.roomName}`;
             type = 'warning';
+            sensorData.sensorType = 'humidity';
           }
           break;
         case 'gas':
@@ -132,10 +137,12 @@ class NotifyService {
             title = 'Cảnh báo khí gas nguy hiểm';
             content = `Nồng độ khí gas đã đạt mức nguy hiểm ${sensorData.value}${sensorData.unit} tại ${sensorData.roomName}`;
             type = 'warning';
+            sensorData.sensorType = 'gas';
           } else if (sensorData.value > 600) {
             title = 'Cảnh báo khí gas cao';
             content = `Nồng độ khí gas đã vượt ngưỡng ${sensorData.value}${sensorData.unit} tại ${sensorData.roomName}`;
             type = 'warning';
+            sensorData.sensorType = 'gas';
           }
           break;
         case 'light':
@@ -143,10 +150,12 @@ class NotifyService {
             title = 'Cảnh báo thiếu ánh sáng';
             content = `Cường độ ánh sáng quá thấp ${sensorData.value}${sensorData.unit} tại ${sensorData.roomName}`;
             type = 'info';
+            sensorData.sensorType = 'light';
           } else if (sensorData.value > 1000) {
             title = 'Cảnh báo ánh sáng quá mạnh';
             content = `Cường độ ánh sáng quá cao ${sensorData.value}${sensorData.unit} tại ${sensorData.roomName}`;
             type = 'info';
+            sensorData.sensorType = 'light';
           }
           break;
         default:
@@ -173,11 +182,10 @@ class NotifyService {
         title,
         content,
         sensorType: sensorData.sensorType,
-        sensorId: sensorData.sensorId,
-        sensorName: sensorData.sensorName,
+        sensorName: sensorData.name,
         sensorValue: sensorData.value.toString(),
         roomId: sensorData.roomId,
-        roomType: sensorData.roomType,
+        roomName: sensorData.roomName,
         organizationId: organizationId,
         isRead: false
       }));
@@ -188,7 +196,6 @@ class NotifyService {
           notify.content = `[${organization.name}] ${notify.content}`;
         }
       }
-      
       // Lưu các thông báo vào cơ sở dữ liệu
       return await Notify.insertMany(notifications);
     } catch (error) {

@@ -29,4 +29,7 @@ router.post('/invitations/accept', protect, organizationController.acceptInvitat
 router.post('/invitations/reject', protect, organizationController.rejectInvitation); // Từ chối lời mời
 router.get('/invitations/pending', protect, organizationController.getPendingInvitations); // Lấy danh sách lời mời đang chờ
 
+// Thành viên tự rời tổ chức
+router.delete('/:orgId/leave', protect, organizationController.leaveOrganization);
+
 module.exports = router; 

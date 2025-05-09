@@ -98,12 +98,18 @@ class OrganizationController {
             const { email, role, requestingUserId } = req.body;        
             // Authorization check happens in the service
             const updatedOrganization = await organizationService.addMemberToOrganization(orgId, email, role, requestingUserId);
+            
+            // Kiểm tra xem kết quả có phải là object lỗi không
+            if (updatedOrganization && updatedOrganization.status) {
+                return res.status(updatedOrganization.status).json({ message: updatedOrganization.message });
+            }
+            
             if (updatedOrganization) {
                 try {
                     await notifyService.createInviteNotification(email, orgId, requestingUserId);
                 } catch (notifyError) {
                     console.error('Error creating invitation notification:', notifyError);
-                        // Không throw error, vẫn tiếp tục xử lý API response
+                    // Không throw error, vẫn tiếp tục xử lý API response
                 }
             }
             
@@ -285,6 +291,44 @@ class OrganizationController {
             res.status(500).json({
                 success: false,
                 message: 'Lỗi khi lấy thông tin chủ sở hữu tổ chức'
+            });
+        }
+    }
+
+    // Thành viên tự rời tổ chức
+    async leaveOrganization(req, res) {
+        try {
+            const { orgId } = req.params;
+            
+            if (!req.user || !req.user._id) {
+                return res.status(401).json({ 
+                    success: false, 
+                    message: 'Authentication required.' 
+                });
+            }
+            
+            const userId = req.user._id;
+            
+            // Gọi service method để thực hiện rời tổ chức
+            const result = await organizationService.leaveOrganization(orgId, userId);
+            
+            if (result.status !== 200) {
+                return res.status(result.status).json({
+                    success: false,
+                    message: result.message
+                });
+            }
+            
+            res.status(200).json({
+                success: true,
+                message: result.message
+            });
+        } catch (error) {
+            console.error("Error leaving organization:", error);
+            const status = error.status || 500;
+            res.status(status).json({ 
+                success: false,
+                message: error.message || 'Đã xảy ra lỗi khi rời khỏi tổ chức.'
             });
         }
     }

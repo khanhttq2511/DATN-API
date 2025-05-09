@@ -65,7 +65,7 @@ const setupMQTT = (app) => {
             status,
             roomType
           );
-
+          global.io.emit('newDeviceStatus', parsedSensorsData);
           // client.publish(message.toString(), JSON.stringify(formatToPub));
         }
         if (topic === "esp32/status") {

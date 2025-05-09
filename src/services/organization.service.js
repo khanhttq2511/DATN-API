@@ -235,8 +235,8 @@ class OrganizationService {
     async addMemberToOrganization(orgId, email, role = 'member', requestingUserId) {
         if (!orgId || !email || !requestingUserId) {
            return { status: 400, message: 'Organization ID, User ID to add, and requesting User ID are required.' };
-       }
-       try {
+        }
+        try {
             const organization = await Organization.findById(orgId);
             if (!organization) {
                 return { status: 404, message: 'Organization not found.' };
@@ -257,10 +257,20 @@ class OrganizationService {
                  return { status: 404, message: 'User to add not found.' };
             }
 
-            // Kiểm tra xem người dùng đã là thành viên của tổ chức chưa, 
+            // Kiểm tra xem người dùng đã là thành viên của tổ chức chưa
             const isAlreadyMember = organization.members.some(member => member.userId && member.userId.equals(userToAdd._id));
             if (isAlreadyMember) {
                 return { status: 409, message: 'User is already a member of this organization.' };
+            }
+
+            // Kiểm tra xem người dùng có thuộc tổ chức khác không (có status 'joined')
+            const userOrganizations = await Organization.find({
+                "members.userId": userToAdd._id,
+                "members.status": "joined"
+            });
+            
+            if (userOrganizations && userOrganizations.length > 0) {
+                return { status: 400, message: 'Thành viên này đang thuộc tổ chức khác' };
             }
 
             // Add the member with status 'pending' (waiting for acceptance)
@@ -558,6 +568,54 @@ class OrganizationService {
         } catch (error) {
             console.error('Error fetching pending invitations:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Allows a member to leave an organization voluntarily.
+     * The owner cannot leave the organization this way.
+     * @param {string} orgId - The ID of the organization.
+     * @param {string} userId - The ID of the user who wants to leave.
+     * @returns {Promise<object>} Success or error object.
+     */
+    async leaveOrganization(orgId, userId) {
+        if (!orgId || !userId) {
+            return { status: 400, message: 'Organization ID and User ID are required.' };
+        }
+        try {
+            const organization = await Organization.findById(orgId);
+            if (!organization) {
+                return { status: 404, message: 'Tổ chức không tồn tại.' };
+            }
+
+            // Owner không thể tự rời tổ chức
+            if (organization.ownerId.equals(userId)) {
+                return { status: 400, message: 'Chủ sở hữu không thể rời tổ chức. Hãy xóa tổ chức hoặc chuyển quyền sở hữu trước.' };
+            }
+
+            // Kiểm tra xem người dùng có phải là thành viên không
+            const memberIndex = organization.members.findIndex(member => 
+                member.userId && member.userId.equals(userId) && member.status === 'joined'
+            );
+            
+            if (memberIndex === -1) {
+                return { status: 404, message: 'Bạn không phải là thành viên của tổ chức này.' };
+            }
+
+            // Xóa thành viên khỏi tổ chức
+            await Organization.findByIdAndUpdate(orgId, {
+                $pull: { members: { userId: userId } }
+            });
+
+            // Cập nhật document của người dùng
+            await User.findByIdAndUpdate(userId, {
+                $pull: { organizations: { organizationId: orgId } }
+            });
+
+            return { status: 200, message: 'Bạn đã rời khỏi tổ chức thành công.' };
+        } catch (error) {
+            console.error("Error leaving organization:", error);
+            return { status: 500, message: 'Đã xảy ra lỗi khi rời khỏi tổ chức.' };
         }
     }
 }
