@@ -502,7 +502,7 @@ class OrganizationService {
                 throw createError(404, 'Không tìm thấy tổ chức.');
             }
             
-            // Cập nhật trạng thái thành viên thành 'rejected'
+            // Kiểm tra xem người dùng có trong danh sách được mời không
             const memberIndex = organization.members.findIndex(
                 member => member.userId.toString() === inviteeId.toString()
             );
@@ -511,8 +511,11 @@ class OrganizationService {
                 throw createError(400, 'Người dùng không có trong danh sách được mời.');
             }
             
-            organization.members[memberIndex].status = 'rejected';
-            await organization.save();
+            // Xóa thành viên khỏi danh sách members thay vì chỉ đánh dấu 'rejected'
+            await Organization.findByIdAndUpdate(
+                organizationId,
+                { $pull: { members: { userId: inviteeId } } }
+            );
             
             // Cập nhật trạng thái trong user document nếu cần
             await User.findByIdAndUpdate(
