@@ -74,6 +74,7 @@ class ScheduleService {
       const topic = 'devices-down';
       sendMessageToTopic(topic, formattoPub);
 
+      global.io.emit('executeSchedule', "Lịch hẹn giờ của thiết bị đã được thực hiện");
       return device;
     } catch (error) {
       throw new Error(`Lỗi thực thi lịch hẹn giờ: ${error.message}`);

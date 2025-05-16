@@ -75,6 +75,50 @@ class SensorController {
       res.status(500).json({ message: error.message });
     }
   }
+
+  async getSensorsByDay(req, res) {
+    try {
+      const { startDate, endDate, roomId, organizationId } = req.query;
+      if (!roomId || !organizationId) {
+        return res.status(400).json({ message: 'roomId and organizationId are required' });
+      }
+      
+      const sensors = await sensorService.getSensorsByDay(startDate, endDate, roomId, organizationId);
+      res.json(sensors);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async getSensorsByWeek(req, res) {
+    try {
+      const { startDate, endDate, roomId, organizationId } = req.query;
+      if (!roomId || !organizationId) {
+        return res.status(400).json({ message: 'roomId and organizationId are required' });
+      }
+      
+      const sensors = await sensorService.getSensorsByWeek(startDate, endDate, roomId, organizationId);
+      res.json(sensors);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async getSensorsByMonth(req, res) {
+    try {
+      const { startDate, endDate, roomId, organizationId } = req.query;
+      
+      if (!roomId || !organizationId) {
+        return res.status(400).json({ message: 'roomId and organizationId are required' });
+      }
+
+      
+      const sensors = await sensorService.getSensorsByMonth(startDate, endDate, roomId, organizationId);
+      res.json(sensors);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
 }
 
 module.exports = new SensorController(); 

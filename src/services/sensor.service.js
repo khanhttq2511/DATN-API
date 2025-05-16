@@ -32,6 +32,7 @@ class SensorService {
         notificationService.createSensorAlertNotification(sensorData.organizationId, sensorData);
       }
     }
+    sensorData.isActive = true;
     const sensor = new Sensor(sensorData);
     return await sensor.save();
   }
@@ -88,6 +89,76 @@ class SensorService {
     return result;
   }
 
+  async getSensorsByDay(startDate, endDate, roomId, organizationId) {
+    // Tạo đối tượng Date từ chuỗi ngày hoặc sử dụng ngày hiện tại
+    const targetDate = startDate ? new Date(startDate) : new Date();
+    
+    // Đặt thời gian về đầu ngày (00:00:00)
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    // Đặt thời gian về cuối ngày (23:59:59)
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    // Xây dựng query
+    const query = {
+      roomId,
+      organizationId,
+      createdAt: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    };
+    
+    
+    return await Sensor.find(query).sort({ createdAt: 1 });
+  }
+
+  async getSensorsByWeek(startDate, endDate, roomId, organizationId) {
+    // Tạo đối tượng Date từ chuỗi ngày hoặc sử dụng ngày hiện tại
+    const targetDate = startDate ? new Date(startDate) : new Date();
+    
+    // Tìm ngày đầu tuần (Thứ Hai)
+    const startOfWeek = new Date(targetDate);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Điều chỉnh khi chủ nhật
+    startOfWeek.setDate(diff);
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    // Tìm ngày cuối tuần (Chủ Nhật)
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+    
+    // Xây dựng query
+    const query = {
+      roomId,
+      organizationId,
+      createdAt: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    };
+    
+    
+    return await Sensor.find(query).sort({ createdAt: 1 });
+  }
+
+  async getSensorsByMonth(startDate, endDate, roomId, organizationId) {
+    
+    // Xây dựng query
+    const query = {
+      roomId,
+      organizationId,
+      createdAt: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    };
+    
+    return await Sensor.find(query).sort({ createdAt: 1 });
+  }
 }
 
 module.exports = new SensorService(); 

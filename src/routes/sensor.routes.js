@@ -12,4 +12,9 @@ router.delete('/:id', sensorController.deleteSensor);
 // Additional routes
 router.get('/device/:deviceId', sensorController.getSensorsByDevice);
 
+// Time-based data routes
+router.get('/data/daily', sensorController.getSensorsByDay);
+router.get('/data/weekly', sensorController.getSensorsByWeek);
+router.get('/data/monthly', sensorController.getSensorsByMonth);
+
 module.exports = router; 

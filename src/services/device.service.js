@@ -2,6 +2,7 @@ const Device = require('../models/device.model');
 const { sendMessageToTopic } = require('../utils');
 const HistoryService = require('./history.service');
 const History = require('../models/history.model');
+const Schedule = require('../models/schedule.model');
 
 class DeviceService {
   async createDevice(deviceData, userData) {
@@ -155,6 +156,9 @@ class DeviceService {
       },
       { $set: { isActive: isActive } }
     );
+    const response = await Device.find({ roomId: roomId, organizationId: orgId });
+    console.log("result", result);
+    console.log("response", response);
     return result;
   }
 }

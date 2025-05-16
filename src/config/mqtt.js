@@ -75,10 +75,13 @@ const setupMQTT = (app) => {
           const roomId = parsedSensorsData.roomId;
           const isActive = parsedSensorsData.isActive;
 
-          deviceService.updateDeviceActive(roomId, isActive, orgId);
-          sensorService.updateSensorActive(roomId, isActive, orgId);
-
-          // client.publish(message.toString(), JSON.stringify(formatToPub));
+          // Wait for both updates to complete
+          await Promise.all([
+            deviceService.updateDeviceActive(roomId, isActive, orgId),
+            sensorService.updateSensorActive(roomId, isActive, orgId)
+          ]);
+          
+          global.io.emit('esp32Status', "Cập nhật trạng thái esp32 thành công");
         }
       });
     },
