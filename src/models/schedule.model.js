@@ -13,15 +13,15 @@ const scheduleSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  status: {
+  status: { // This is the target status for the device when the schedule executes
     type: String,
-    enum: ['active', 'inactive'],
+    enum: ['active', 'inactive'], // 'active' usually means ON, 'inactive' means OFF
     required: true
   },
-  scheduledTime: {
+  scheduledTime: { // The exact date and time this one-time schedule should execute
     type: Date,
     required: true
-  },  
+  },
   userId: {
     type: String,
     required: true
@@ -37,7 +37,7 @@ const scheduleSchema = new mongoose.Schema({
   roomType: {
     type: String,
     required: true
-  },
-}, {timestamps: true});
+  }
+}, { timestamps: true });
 
 module.exports = mongoose.model('Schedule', scheduleSchema);

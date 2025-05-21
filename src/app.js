@@ -17,7 +17,7 @@ const contactRoutes = require('./routes/contact.routes.js');
 const organizationRoutes = require('./routes/organization.routes.js');
 const historyRoutes = require('./routes/history.routes.js');
 const scheduleRoutes = require('./routes/schedule.routes.js');
-const { initAgenda, agenda } = require('./schedule.cron.js');
+const { initAgenda, agenda, initAgendaAutoMode, agendaAutoMode } = require('./schedule.cron.js');
 const scheduleService = require('./services/schedule.service');
 const notifyRoutes = require('./routes/notify.routes.js');
 const { ServerApiVersion } = require('mongodb');
@@ -84,17 +84,35 @@ global.io = io;
 setupMQTT(app);
 initAgenda();
 app.set('agenda', agenda);
+initAgendaAutoMode();
+app.set('agendaAutoMode', agendaAutoMode);
 
-
-    // Start agenda scheduler
+    // Start agenda scheduler manual schedules
   agenda.define("executeSchedule", async (job) => {
       const now = new Date();
       const scheduleData = job.attrs.data;
-      const executeAt = new Date(scheduleData.executeAt);
-
+      const executeAt = new Date(scheduleData.scheduledTime);
+      
       // Chỉ thực thi nếu đã đến hoặc qua thời gian executeAt
       if (now >= executeAt) {
-        await scheduleService.executeSchedule({scheduleId: scheduleData.scheduleId});
+        await scheduleService.executeSchedule({scheduleId: scheduleData._id});
+      } else {
+        console.log(
+          `Job ${job.attrs.name} scheduled for ${executeAt}, skipping execution`
+        );
+      }
+    });
+
+    agendaAutoMode.define("checkAndExecuteAutoMode", async (job) => {
+      const now = new Date();
+      const scheduleData = job.attrs.data;
+      const executeAt = new Date(scheduleData.scheduleTime);
+      console.log("executeAt", executeAt);
+      console.log("now", now);
+      
+      // Chỉ thực thi nếu đã đến hoặc qua thời gian executeAt
+      if (now >= executeAt) {
+        await scheduleService.checkAndExecuteAutoMode({scheduleId: scheduleData.scheduleId});
       } else {
         console.log(
           `Job ${job.attrs.name} scheduled for ${executeAt}, skipping execution`

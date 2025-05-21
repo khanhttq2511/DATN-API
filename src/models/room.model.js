@@ -19,7 +19,6 @@ const roomSchema = new mongoose.Schema({
   type: {
     type: String,
     required: false,
-    enum: ['bedroom', 'kitchen', 'livingroom', 'movieroom']
   },
   userId: { 
     type: String,
@@ -35,13 +34,26 @@ const roomSchema = new mongoose.Schema({
     ref: 'Organization',
     required: true
   },
+  area: {
+    type: String,
+    required: false,
+    enum: ['outside', 'inside']
+  },
+  isAuto: {
+    type: Boolean,
+    required: false,
+  },
+  isActive: {
+    type: Boolean,
+    required: false,
+  },
 },{timestamps: true});
 roomSchema.pre('save', async function(next) {
   if(this.type === 'bedroom') {
     this.allowDevice = ['fan'];
   }
   else if (this.type === 'kitchen') { 
-    this.allowDevice = ['light'];
+    this.allowDevice = ['light', 'fan'];
   }
   else if (this.type === 'livingroom') {
     this.allowDevice = ['light'];

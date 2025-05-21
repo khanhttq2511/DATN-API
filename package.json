@@ -16,6 +16,8 @@
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.6.0",
     "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^16.3.1",
     "emailjs": "^4.0.3",
     "emailjs-com": "^3.2.0",

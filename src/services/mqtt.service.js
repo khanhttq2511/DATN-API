@@ -1,7 +1,5 @@
 const mqtt = require('mqtt');
 
-
-
 class MQTTService {
     constructor() {
         this.client = null;

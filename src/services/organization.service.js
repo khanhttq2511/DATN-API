@@ -63,7 +63,7 @@ class OrganizationService {
             }, { new: true }); // addToSet prevents duplicates
 
             // Populate owner details before returning
-            await newOrganization.populate('ownerId', 'name email');
+            await newOrganization.populate('ownerId', 'name email username avatarURL');
 
             return newOrganization; // Return the successful object
         } catch (error) {
@@ -90,7 +90,7 @@ class OrganizationService {
             const organizations = await Organization.find({ 
                 "members.userId": userId
             })
-            .populate('ownerId', 'name email')
+            .populate('ownerId', 'name email username avatarURL')
             .sort({ createdAt: -1 });
 
             return organizations;
@@ -112,9 +112,10 @@ class OrganizationService {
             return { status: 400, message: 'Organization ID and requesting User ID are required.' };
         }
         try {
+            // Lấy thông tin organization với populate
             const organization = await Organization.findById(orgId)
-                .populate('ownerId', 'name email')
-                .populate('members.userId', 'name email');
+                .populate('ownerId', 'name email username avatarURL')
+                .populate('members.userId', 'name email username avatarURL');
 
             if (!organization) {
                 return { status: 404, message: 'Organization not found.' };
@@ -139,7 +140,28 @@ class OrganizationService {
                 };
             }
 
-            return organization;
+            // Chuyển đổi sang object thông thường để dễ thao tác
+            const orgObject = organization.toObject();
+            
+            // Sử dụng thông tin từ User collection, bỏ qua thông tin lưu trữ cục bộ đã lỗi thời
+            orgObject.members = organization.members.map(member => {
+                if (member.userId && typeof member.userId === 'object') {
+                    // Giữ lại thông tin role, status và joinedAt từ members collection
+                    // Lấy thông tin user mới nhất từ User collection qua populate
+                    return {
+                        userId: member.userId._id,
+                        role: member.role,
+                        status: member.status,
+                        joinedAt: member.joinedAt,
+                        username: member.userId.username,
+                        email: member.userId.email,
+                        avatarURL: member.userId.avatarURL
+                    };
+                }
+                return member;
+            });
+
+            return orgObject;
         } catch (error) {
              console.error("Error getting organization details:", error);
              return { status: 500, message: 'Error getting organization details.' };
@@ -171,8 +193,8 @@ class OrganizationService {
             organization.name = newName;
             await organization.save(); // Use save to trigger potential middleware/validation
 
-            await organization.populate('ownerId', 'name email');
-            await organization.populate('members.userId', 'name email');
+            await organization.populate('ownerId', 'name email username avatarURL');
+            await organization.populate('members.userId', 'name email username avatarURL');
 
             return organization;
         } catch (error) {
@@ -288,7 +310,7 @@ class OrganizationService {
             // They'll be added only after accepting the invitation
 
             // Return updated org with populated members
-            await organization.populate('members.userId', 'name email');
+            await organization.populate('members.userId', 'name email username avatarURL');
             await organization.populate('ownerId', 'name email');
             return organization;
         } catch (error) {
@@ -342,8 +364,8 @@ class OrganizationService {
 
             // Return updated org
             const updatedOrg = await Organization.findById(orgId)
-                                                .populate('ownerId', 'name email')
-                                                .populate('members.userId', 'name email');
+                                                .populate('ownerId', 'name email username avatarURL')
+                                                .populate('members.userId', 'name email username avatarURL');
             return updatedOrg; // Return the updated document on success
         } catch(error) {
              console.error("Error removing member:", error);
@@ -417,8 +439,8 @@ class OrganizationService {
 
             // Return updated org, regardless if roleUpdated was true or false (idempotent)
             const updatedOrg = await Organization.findById(orgId)
-                                                .populate('ownerId', 'name email')
-                                                .populate('members.userId', 'name email');
+                                                .populate('ownerId', 'name email username avatarURL')
+                                                .populate('members.userId', 'name email username avatarURL');
             return updatedOrg; // Return the potentially updated document
         } catch (error) {
              console.error("Error updating member role:", error);
@@ -619,6 +641,55 @@ class OrganizationService {
         } catch (error) {
             console.error("Error leaving organization:", error);
             return { status: 500, message: 'Đã xảy ra lỗi khi rời khỏi tổ chức.' };
+        }
+    }
+
+    /**
+     * Cập nhật thông tin người dùng trong tất cả các tổ chức mà họ là thành viên
+     * @param {string} userId - ID của người dùng cần cập nhật
+     * @param {object} userData - Dữ liệu mới của người dùng (email, username, avatarURL)
+     * @returns {Promise<object>} - Kết quả cập nhật
+     */
+    async updateUserInfoInOrganizations(userId, userData) {
+        if (!userId || !userData) {
+            return { status: 400, message: 'User ID và thông tin người dùng là bắt buộc.' };
+        }
+        
+        try {
+            // Tìm tất cả các tổ chức có người dùng là thành viên
+            const organizations = await Organization.find({ 'members.userId': userId });
+            
+            let updatedCount = 0;
+            
+            // Cập nhật thông tin người dùng trong từng tổ chức
+            for (const org of organizations) {
+                let updated = false;
+                
+                // Cập nhật thông tin của từng thành viên có userId tương ứng
+                org.members.forEach(member => {
+                    if (member.userId.toString() === userId.toString()) {
+                        if (userData.username) member.username = userData.username;
+                        if (userData.email) member.email = userData.email;
+                        if (userData.avatarURL) member.avatarURL = userData.avatarURL;
+                        updated = true;
+                    }
+                });
+                
+                // Lưu lại tổ chức nếu có thay đổi
+                if (updated) {
+                    await org.save();
+                    updatedCount++;
+                }
+            }
+            
+            return { 
+                status: 200, 
+                message: 'Cập nhật thông tin người dùng trong tổ chức thành công.',
+                modifiedCount: updatedCount
+            };
+        } catch (error) {
+            console.error('Error updating user info in organizations:', error);
+            return { status: 500, message: 'Lỗi khi cập nhật thông tin người dùng trong tổ chức.' };
         }
     }
 }

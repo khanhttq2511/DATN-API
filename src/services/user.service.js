@@ -6,6 +6,7 @@ const axios = require('axios');
 const { sendMail } = require('../email');
 const { forgotPasswordTemplate } = require('../lib/email-template/forgot-password');
 const jwt = require('jsonwebtoken');
+const organizationService = require('./organization.service');
 
 dotenv.config();
 class UserService {
@@ -23,7 +24,20 @@ class UserService {
   }
 
   async updateUser(id, userData) {
-    return await User.findByIdAndUpdate(id, userData, { new: true });
+    // Cập nhật thông tin người dùng
+    const updatedUser = await User.findByIdAndUpdate(id, userData, { new: true });
+    
+    // Nếu có cập nhật thông tin liên quan đến username, email, hoặc avatar
+    if (updatedUser && (userData.username || userData.email || userData.avatarURL)) {
+      // Đồng bộ hóa thông tin này trong tất cả các tổ chức mà người dùng là thành viên
+      await organizationService.updateUserInfoInOrganizations(id, {
+        username: updatedUser.username,
+        email: updatedUser.email,
+        avatarURL: updatedUser.avatarURL
+      });
+    }
+    
+    return updatedUser;
   }
 
   async deleteUser(id) {

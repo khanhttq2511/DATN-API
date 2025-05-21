@@ -93,6 +93,41 @@ class DeviceController {
       res.status(500).json({ message: error.message });
     }
   }
+
+  /**
+   * Lấy tất cả thiết bị trong một tổ chức
+   * @param {Request} req - Express request object
+   * @param {Response} res - Express response object
+   */
+  async getDevicesByOrganization(req, res) {
+    try {
+      const { organizationId } = req.params;
+      
+      // Lấy các tham số filter từ query string
+      const filters = {
+        status: req.query.status,
+        type: req.query.type,
+        roomId: req.query.roomId,
+        isActive: req.query.isActive === 'true' ? true : 
+                  req.query.isActive === 'false' ? false : undefined
+      };
+      
+      // Lọc bỏ các giá trị undefined
+      Object.keys(filters).forEach(key => {
+        if (filters[key] === undefined) {
+          delete filters[key];
+        }
+      });
+      
+      const devices = await deviceService.getDevicesByOrganization(organizationId, filters);
+      res.json(devices);
+    } catch (error) {
+      res.status(500).json({ 
+        success: false,
+        message: error.message 
+      });
+    }
+  }
 }
 
 module.exports = new DeviceController(); 

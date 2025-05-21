@@ -15,7 +15,7 @@ const threshold = {
     message: "Cảnh báo: Nguy hiểm"
   },
   light: {
-    min: 0,
+    min: 100,
     max: 1000,
   }
 }

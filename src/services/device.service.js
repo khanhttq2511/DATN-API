@@ -3,6 +3,7 @@ const { sendMessageToTopic } = require('../utils');
 const HistoryService = require('./history.service');
 const History = require('../models/history.model');
 const Schedule = require('../models/schedule.model');
+const Room = require('../models/room.model');
 
 class DeviceService {
   async createDevice(deviceData, userData) {
@@ -17,7 +18,8 @@ class DeviceService {
   }
 
   async getAllDevicesByRoomId(roomId) {
-    return await Device.find({ roomId: roomId });
+    const result = await Device.find({ roomId: roomId });
+    return result;
   }
 
   async getDeviceById(id) {
@@ -48,7 +50,14 @@ class DeviceService {
   }
 
   async getDevicesByRoom(roomId) {
-    return await Device.find({ roomId });
+    // Kiểm tra phòng có tồn tại không
+    const room = await Room.findById(roomId);
+    if (!room) {
+      // Có thể trả về mảng rỗng hoặc throw exception tùy vào logic nghiệp vụ
+      return [];
+    }
+    const result = await Device.find({ roomId });
+    return result;
   }
 
   async updateDeviceStatus(id, status, roomType) {
@@ -157,9 +166,60 @@ class DeviceService {
       { $set: { isActive: isActive } }
     );
     const response = await Device.find({ roomId: roomId, organizationId: orgId });
-    console.log("result", result);
-    console.log("response", response);
     return result;
+  }
+
+  /**
+   * Lấy tất cả thiết bị trong một tổ chức
+   * @param {string} organizationId - ID của tổ chức
+   * @param {Object} filters - Các bộ lọc (trạng thái, loại thiết bị, etc.)
+   * @returns {Promise<Array>} - Danh sách thiết bị trong tổ chức
+   */
+  async getDevicesByOrganization(organizationId, filters = {}) {
+    try {
+      if (!organizationId) {
+        throw new Error('Organization ID is required');
+      }
+
+      // Xây dựng điều kiện tìm kiếm
+      const query = { organizationId };
+
+      // Thêm điều kiện lọc theo trạng thái nếu có
+      if (filters.status) {
+        query.status = filters.status;
+      }
+
+      // Thêm điều kiện lọc theo loại thiết bị nếu có
+      if (filters.type) {
+        query.type = filters.type;
+      }
+
+      // Thêm điều kiện lọc theo phòng nếu có
+      if (filters.roomId) {
+        query.roomId = filters.roomId;
+      }
+
+      // Thêm điều kiện lọc theo trạng thái kích hoạt nếu có
+      if (filters.isActive !== undefined) {
+        query.isActive = filters.isActive;
+      }
+
+      // Lấy danh sách thiết bị
+      const devices = await Device.find(query);
+      return devices;
+    } catch (error) {
+      throw new Error(`Error getting devices by organization: ${error.message}`);
+    }
+  }
+
+  async cleanupOrphanedDevices() {
+    const allDevices = await Device.find();
+    for (const device of allDevices) {
+      const room = await Room.findById(device.roomId);
+      if (!room) {
+        await Device.findByIdAndDelete(device._id);
+      }
+    }
   }
 }
 

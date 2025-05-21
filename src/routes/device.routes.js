@@ -11,7 +11,7 @@ router.put('/:id', deviceController.updateDevice);
 router.delete('/:id', deviceController.deleteDevice);
 router.post('/toggle-status', protect, deviceController.toggleStatus);
 
-
-
+// Organization related routes
+router.get('/organization/:organizationId', protect, deviceController.getDevicesByOrganization);
 
 module.exports = router; 

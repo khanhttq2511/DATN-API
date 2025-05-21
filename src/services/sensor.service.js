@@ -2,6 +2,7 @@ const Sensor = require('../models/sensor.model');
 const threshold = require('../config/threshold');
 const notificationService = require('./notify.service');
 const roomService = require('./room.service');
+const deviceControlService = require('./deviceControl.service');
 
 class SensorService {
   async createSensor(sensorData) {
@@ -34,7 +35,13 @@ class SensorService {
     }
     sensorData.isActive = true;
     const sensor = new Sensor(sensorData);
-    return await sensor.save();
+    const savedSensor = await sensor.save();
+
+    global.io.emit('sensor-data', "Cập nhật dữ liệu sensor thành công");
+    // Control devices based on sensor data
+    // await deviceControlService.controlDevicesBySensorData(sensorData);
+
+    return savedSensor;
   }
 
   async getAllSensors(roomId, organizationId) {
@@ -86,6 +93,7 @@ class SensorService {
       },
       { $set: { isActive: isActive } }
     );
+    console.log("result", result);
     return result;
   }
 
