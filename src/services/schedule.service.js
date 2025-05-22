@@ -110,31 +110,31 @@ class ScheduleService {
     
       return `${minute} ${hour} * * ${dayPart}`;  // Ex: "0 18 * * 1,3,5"
     }
-    function getNextStartTimeAsDateUTC(startTime, daysOfWeek) {
-      const { DateTime } = require("luxon");
-      const [hour, minute] = startTime.split(":").map(Number);
-      const now = DateTime.now().setZone("Asia/Ho_Chi_Minh");
-      const dayMap = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    // function getNextStartTimeAsDateUTC(startTime, daysOfWeek) {
+    //   const { DateTime } = require("luxon");
+    //   const [hour, minute] = startTime.split(":").map(Number);
+    //   const now = DateTime.now().setZone("Asia/Ho_Chi_Minh");
+    //   const dayMap = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     
-      for (let i = 0; i < 7; i++) {
-        const candidate = now.plus({ days: i }).set({ hour, minute, second: 0, millisecond: 0 });
-        const candidateDay = dayMap[candidate.weekday % 7];
+    //   for (let i = 0; i < 7; i++) {
+    //     const candidate = now.plus({ days: i }).set({ hour, minute, second: 0, millisecond: 0 });
+    //     const candidateDay = dayMap[candidate.weekday % 7];
     
-        if (daysOfWeek.includes(candidateDay) && candidate >= now) {
-          return candidate.toUTC().toJSDate();
-        }
-      }
+    //     if (daysOfWeek.includes(candidateDay) && candidate >= now) {
+    //       return candidate.toUTC().toJSDate();
+    //     }
+    //   }
     
-      // Fallback: lấy ngày gần nhất phù hợp
-      if (daysOfWeek.length > 0) {
-        const fallbackDay = daysOfWeek[0];
-        const fallbackIndex = dayMap.indexOf(fallbackDay);
-        const fallbackDate = now.plus({ days: (fallbackIndex + 7 - now.weekday % 7) % 7 }).set({ hour, minute, second: 0, millisecond: 0 });
-        return fallbackDate.toUTC().toJSDate();
-      }
+    //   // Fallback: lấy ngày gần nhất phù hợp
+    //   if (daysOfWeek.length > 0) {
+    //     const fallbackDay = daysOfWeek[0];
+    //     const fallbackIndex = dayMap.indexOf(fallbackDay);
+    //     const fallbackDate = now.plus({ days: (fallbackIndex + 7 - now.weekday % 7) % 7 }).set({ hour, minute, second: 0, millisecond: 0 });
+    //     return fallbackDate.toUTC().toJSDate();
+    //   }
     
-      return now.toUTC().toJSDate(); // fallback cuối cùng: chạy ngay luôn
-    }
+    //   return now.toUTC().toJSDate(); // fallback cuối cùng: chạy ngay luôn
+    // }
     try {
       const device = await DeviceService.getDeviceById(scheduleData.deviceId);
       if (!device) throw new Error('Thiết bị không tồn tại');
@@ -157,34 +157,55 @@ class ScheduleService {
       await autoSchedule.save();
       console.log("autoSchedule", autoSchedule);
   
-      const cronExpression = createCronExpression(
+      const cronStart = createCronExpression(
         autoSchedule.startTime,
         autoSchedule.daysOfWeek
       );
-      console.log("Cron:", cronExpression);
+      const cronEnd = createCronExpression(
+        autoSchedule.endTime,
+        autoSchedule.daysOfWeek
+      );
+      console.log("Cron start:", cronStart);
+      console.log("Cron end:", cronEnd);
   
-      const jobName = `autoModeExecute_${autoSchedule._id.toString()}`; // Tên job duy nhất
-  
+      // const jobName = `autoModeExecute_${autoSchedule._id.toString()}`; // Tên job duy nhất
+      const jobNameStart = `autoModeStart_${autoSchedule._id.toString()}`;
+      const jobNameEnd = `autoModeStop_${autoSchedule._id.toString()}`;
       // Xoá job cũ theo tên duy nhất
-      await agendaAutoMode.cancel({ name: jobName });
+      await agendaAutoMode.cancel({ name: { $in: [jobNameStart, jobNameEnd] } });
   
       // Định nghĩa job mới với tên duy nhất
       // Hàm handler cho job này sẽ được gọi khi job được thực thi
-      await agendaAutoMode.define(jobName, { priority: 'high' }, async (job) => {
-        console.log(`Job [${job.attrs.name}] triggered. Executing checkAndExecuteAutoMode for scheduleId: ${autoSchedule._id.toString()}`);
-        // Gọi hàm checkAndExecuteAutoMode với scheduleId lấy từ closure
-        // (vì autoSchedule._id có sẵn trong scope này khi define được gọi)
-        await this.checkAndExecuteAutoMode({ scheduleId: autoSchedule._id.toString() });
+      // await agendaAutoMode.define(jobName, { priority: 'high' }, async (job) => {
+      //   console.log(`Job [${job.attrs.name}] triggered. Executing checkAndExecuteAutoMode for scheduleId: ${autoSchedule._id.toString()}`);
+      //   // Gọi hàm checkAndExecuteAutoMode với scheduleId lấy từ closure
+      //   // (vì autoSchedule._id có sẵn trong scope này khi define được gọi)
+      //   await this.checkAndExecuteAutoMode({ scheduleId: autoSchedule._id.toString() });
+      // });
+
+          // Job START: bật thiết bị
+      await agendaAutoMode.define(jobNameStart, { priority: 'high' }, async (job) => {
+        console.log(`[AutoMode] Start Job triggered: ${jobNameStart}`);
+        await this.checkAndExecuteAutoMode({ scheduleId: autoSchedule._id.toString(), forceDeviceStatus: true }); // Bật
       });
+      await agendaAutoMode.every(cronStart, jobNameStart);
+
+            // Job END: tắt thiết bị
+      await agendaAutoMode.define(jobNameEnd, { priority: 'high' }, async (job) => {
+        console.log(`[AutoMode] End Job triggered: ${jobNameEnd}`);
+        await this.checkAndExecuteAutoMode({ scheduleId: autoSchedule._id.toString(), forceDeviceStatus: false }); // Tắt
+      });
+      await agendaAutoMode.every(cronEnd, jobNameEnd);
       
-      // Lên lịch cho job bằng tên duy nhất và cron expression
-      await agendaAutoMode.every(cronExpression, jobName, {
-        // Dữ liệu này (nếu có) sẽ có trong job.attrs.data
-        // Hiện tại, chúng ta không cần truyền thêm data ở đây vì scheduleId đã được xử lý trong define
-      });
-  
-      console.log(`[Auto Mode Service] Scheduled job: ${jobName} with cron: ${cronExpression}`);
+      console.log(`[AutoMode] Scheduled jobs for start & stop: ${jobNameStart}, ${jobNameEnd}`);
       return autoSchedule;
+      // await agendaAutoMode.every(cronExpression, jobName, {
+      //   // Dữ liệu này (nếu có) sẽ có trong job.attrs.data
+      //   // Hiện tại, chúng ta không cần truyền thêm data ở đây vì scheduleId đã được xử lý trong define
+      // });
+  
+      // console.log(`[Auto Mode Service] Scheduled job: ${jobName} with cron: ${cronExpression}`);
+      // return autoSchedule;
     } catch (error) {
       console.error("Error in createOrUpdateAutoModeSchedule:", error);
       throw new Error(`Lỗi tạo/cập nhật lịch tự động: ${error.message}`);
@@ -242,7 +263,67 @@ class ScheduleService {
     }
   }
 
-  async checkAndExecuteAutoMode({ scheduleId }) {
+  // async checkAndExecuteAutoMode({ scheduleId }) {
+  //   try {
+  //     const schedule = await AutoModeSchedule.findById(scheduleId);
+  //     console.log("scheduleId hehehhee ", scheduleId);
+  //     if (!schedule) {
+  //       console.warn(`[Auto Mode Check] Không tìm thấy schedule với ID: ${scheduleId}`);
+  //       return { message: 'Schedule không tồn tại' };
+  //     }
+  
+  //     const serverTimeRaw = new Date();
+  //     const timeForCheck = new Date(serverTimeRaw.getTime() + (7 * 60 * 60 * 1000)); // UTC+7
+  
+  //     const currentHour = timeForCheck.getUTCHours();
+  //     const currentMinute = timeForCheck.getUTCMinutes();
+  //     const currentTimeString = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+      
+  //     const localDay = timeForCheck.getUTCDay(); 
+  //     const daysMap = {0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat'};
+  //     const currentDayString = daysMap[localDay];
+  
+  //     const {
+  //       deviceId, deviceName, roomId, organizationId,
+  //       startTime, endTime, daysOfWeek, deviceStatus, roomType
+  //     } = schedule;
+  
+  
+  //     const isDayMatch = daysOfWeek.includes(currentDayString);
+  //     const isInTime = this.isTimeInRange(currentTimeString, startTime, endTime);
+  
+  //     if (!isDayMatch || !isInTime) {
+  //       console.log(`[Auto Mode] Not in scheduled day or time. Skipping.`);
+  //       return;
+  //     }
+  
+  //     const room = await Room.findOne({ _id: roomId, organizationId });
+  //     if (!room || !room.isAuto) {
+  //       console.log(`[Auto Mode] Room not found or not in Auto mode. Skipping.`);
+  //       return;
+  //     }
+  
+  //     const targetDeviceStatusString = deviceStatus ? 'active' : 'inactive';
+  
+  //     await DeviceService.updateDeviceStatus(deviceId, targetDeviceStatusString, roomType);
+  
+  //     let formattoPub = {
+  //       roomId: schedule.roomId,
+  //       type: schedule.deviceType,
+  //       status: schedule.deviceStatus,
+  //       roomType: schedule.roomType
+  //     };
+  //     sendMessageToTopic('devices-down', formattoPub);
+  //     global.io.emit('executeAutoModeSchedule', `Auto-mode executed successfully`);
+  //     return { message: 'Auto-mode executed successfully' };
+  
+  //   } catch (error) {
+  //     console.error('[Auto Mode Check] Error:', error);
+  //     return { message: `Lỗi thực thi chế độ tự động: ${error.message}` }; 
+  //   }
+  // }
+
+  async checkAndExecuteAutoMode({ scheduleId, forceDeviceStatus = null }) {
     try {
       const schedule = await AutoModeSchedule.findById(scheduleId);
       console.log("scheduleId hehehhee ", scheduleId);
@@ -257,16 +338,15 @@ class ScheduleService {
       const currentHour = timeForCheck.getUTCHours();
       const currentMinute = timeForCheck.getUTCMinutes();
       const currentTimeString = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
-      
-      const localDay = timeForCheck.getUTCDay(); 
-      const daysMap = {0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat'};
+  
+      const localDay = timeForCheck.getUTCDay();
+      const daysMap = { 0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' };
       const currentDayString = daysMap[localDay];
   
       const {
         deviceId, deviceName, roomId, organizationId,
-        startTime, endTime, daysOfWeek, deviceStatus, _id, roomType
+        startTime, endTime, daysOfWeek, deviceStatus, roomType, deviceType
       } = schedule;
-  
   
       const isDayMatch = daysOfWeek.includes(currentDayString);
       const isInTime = this.isTimeInRange(currentTimeString, startTime, endTime);
@@ -282,25 +362,28 @@ class ScheduleService {
         return;
       }
   
-      const targetDeviceStatusString = deviceStatus ? 'active' : 'inactive';
+      const statusToUse = forceDeviceStatus !== null ? forceDeviceStatus : deviceStatus;
+      const targetDeviceStatusString = statusToUse ? 'active' : 'inactive';
   
       await DeviceService.updateDeviceStatus(deviceId, targetDeviceStatusString, roomType);
   
-      let formattoPub = {
-        roomId: schedule.roomId,
-        type: schedule.deviceType,
-        status: schedule.deviceStatus,
-        roomType: schedule.roomType
+      const formattoPub = {
+        roomId,
+        type: deviceType,
+        status: statusToUse,
+        roomType
       };
+  
       sendMessageToTopic('devices-down', formattoPub);
       global.io.emit('executeAutoModeSchedule', `Auto-mode executed successfully`);
       return { message: 'Auto-mode executed successfully' };
   
     } catch (error) {
       console.error('[Auto Mode Check] Error:', error);
-      return { message: `Lỗi thực thi chế độ tự động: ${error.message}` }; 
+      return { message: `Lỗi thực thi chế độ tự động: ${error.message}` };
     }
   }
+  
   
   isTimeInRange(currentTime, startTime, endTime) {
     if (startTime <= endTime) {
