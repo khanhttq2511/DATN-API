@@ -200,7 +200,6 @@ class NotifyService {
       return await Notify.insertMany(notifications);
     } catch (error) {
       console.error('Lỗi khi tạo thông báo cho các thành viên tổ chức:', error);
-      throw error;
     }
   }
 
@@ -245,7 +244,6 @@ class NotifyService {
       return await Notify.create(notification);
     } catch (error) {
       console.error('Lỗi khi tạo thông báo mời:', error);
-      throw error;
     }
   }
 
@@ -279,7 +277,6 @@ class NotifyService {
       return await Notify.create(notification);
     } catch (error) {
       console.error('Lỗi khi tạo thông báo phản hồi lời mời:', error);
-      throw error;
     }
   }
 }

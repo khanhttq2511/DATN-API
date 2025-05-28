@@ -502,7 +502,6 @@ class OrganizationService {
             return organization;
         } catch (error) {
             console.error('Error accepting invitation:', error);
-            throw error;
         }
     }
     
@@ -551,7 +550,6 @@ class OrganizationService {
             return { success: true };
         } catch (error) {
             console.error('Error rejecting invitation:', error);
-            throw error;
         }
     }
 
@@ -592,7 +590,6 @@ class OrganizationService {
             });
         } catch (error) {
             console.error('Error fetching pending invitations:', error);
-            throw error;
         }
     }
 

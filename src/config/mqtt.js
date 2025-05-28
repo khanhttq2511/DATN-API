@@ -7,7 +7,7 @@ const { sendMessageToTopic } = require('../utils');
 
 require('dotenv').config();
 const MQTT_CONFIG = {
-  host: process.env.MQTT_HOST || "6550ae3976cb4c62a64fc781224785da.s1.eu.hivemq.cloud", // Broker miễn phí để test
+  host: process.env.MQTT_HOST || "2b2b0dcca51e41a9991eaa7d9cf560af.s1.eu.hivemq.cloud", // Broker miễn phí để test
   port: process.env.MQTT_PORT || 8883,
   protocol: "mqtts",
   clientId: `mqtt_${Math.random().toString(16).substr(2, 8)}`,
@@ -37,7 +37,7 @@ const setupMQTT = (app) => {
 
       mqttService.subscribe("devices-up", (err) => {
         if (err) {
-          console.error("❌ Lỗi khi đăng ký topic devices:", err);
+          console.error("❌ Lỗi khi đăng ký topic devices-up:", err);
         } else {
           console.log("✅ Đăng ký topic devices-up thành công");
         }
@@ -74,10 +74,10 @@ const setupMQTT = (app) => {
           if (!message.toString()) return;
           
           const parsedSensorsData = JSON.parse(message.toString());
-          const roomId = parsedSensorsData.roomId;
-          const type = parsedSensorsData.type;
-          const status = parsedSensorsData.status === true ? 'active' : 'inactive';
-          const roomType = parsedSensorsData.roomType;
+          const roomId = parsedSensorsData?.roomId || "";
+          const type = parsedSensorsData?.type || "";
+          const status = parsedSensorsData?.status === true ? 'active' : 'inactive';
+          const roomType = parsedSensorsData?.roomType || "";
 
           await deviceService.updateDeviceStatusAfterConnected(
             roomId,
@@ -91,10 +91,10 @@ const setupMQTT = (app) => {
         if (topic === "esp32/status") {
           if (!message.toString()) return;
           const parsedSensorsData = JSON.parse(message.toString());
-          const orgId = parsedSensorsData.orgId;
-          const roomId = parsedSensorsData.roomId;
-          const isActive = parsedSensorsData.isActive;
-          const roomType = parsedSensorsData.roomType;
+          const orgId = parsedSensorsData?.orgId || "";
+          const roomId = parsedSensorsData?.roomId || "";
+          const isActive = parsedSensorsData.isActive ;
+          const roomType = parsedSensorsData?.roomType || "";
 
           // Wait for both updates to complete
           await Promise.all([

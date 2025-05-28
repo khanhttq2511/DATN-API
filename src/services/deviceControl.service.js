@@ -153,7 +153,6 @@ class DeviceControlService {
       return controlActions;
     } catch (error) {
       console.error('Error controlling devices:', error);
-      throw error;
     }
   }
 }

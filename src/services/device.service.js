@@ -150,11 +150,13 @@ class DeviceService {
 
   async updateDeviceActive(roomId, isActive, orgId) {
     if (!roomId) {
-      throw new Error('Room ID is required');
+      console.error('Room ID is required');
+      return;
     }
     
     if (!orgId) {
-      throw new Error('Organization ID is required');
+      console.error('Organization ID is required');
+      return;
     }
     
     // Cập nhật tất cả thiết bị trong phòng đã chọn và thuộc tổ chức đó

@@ -79,7 +79,8 @@ class RoomService {
     try {
       const room = await Room.findOne({ _id: roomId, organizationId: orgId });
       if (!room) {
-        throw new Error('Room not found');
+        console.error('Room not found');
+        return;
       }
 
       // Only proceed if the status is actually changing
@@ -129,7 +130,7 @@ class RoomService {
       // Save and return updated room
       return await room.save();
     } catch (error) {
-      throw new Error(`Error changing automode: ${error.message}`);
+      console.error(`Error changing automode: ${error.message}`);
     }
   }
 
@@ -141,7 +142,8 @@ class RoomService {
   async updateRoomActive(roomId, isActive, orgId) {
     const room = await Room.findOne({ _id: roomId, organizationId: orgId });
     if (!room) {
-      throw new Error('Room not found');
+      console.error('Room not found');
+      return;
     }
     room.isActive = isActive;
     return await room.save();
@@ -151,7 +153,8 @@ class RoomService {
     try {
       const room = await Room.findOne({ _id: roomId, organizationId });
       if (!room) {
-        throw new Error('Room not found');
+        console.error('Room not found');
+        return;
       }
 
       room.allowDevice = allowDevice;

@@ -36,7 +36,6 @@ async function createTransporter() {
     return transporter;
   } catch (error) {
     console.error("Error creating mail transporter:", error);
-    throw error;
   }
 }
 
@@ -49,7 +48,7 @@ async function sendMail(mailOptions) {
       await createTransporter();
     }
     if (!to || !subject || !html) {
-      throw new Error("Missing required fields");
+      console.error("Missing required fields");
     }
     // Nếu không cung cấp mailOptions, sử dụng mặc định
     const options = mailOptions || {
@@ -63,7 +62,6 @@ async function sendMail(mailOptions) {
     return "Email sent successfully";
   } catch (error) {
     console.error("Error sending email:", error);
-    throw error;
   }
 }
 
@@ -77,7 +75,7 @@ async function sendMailContact(mailOptions) {
     }
     
     if (!email || !subject || !html) {
-      throw new Error("Missing required fields");
+      console.error("Missing required fields");
     }
     
     // Nếu không cung cấp mailOptions, sử dụng mặc định
@@ -93,7 +91,6 @@ async function sendMailContact(mailOptions) {
     return "Email sent successfully";
   } catch (error) {
     console.error("Error sending email:", error);
-    throw error;
   }
 }
 // Xuất các hàm để sử dụng ở các file khác

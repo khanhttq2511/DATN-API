@@ -36,8 +36,8 @@ class SensorService {
     sensorData.isActive = true;
     const sensor = new Sensor(sensorData);
     const savedSensor = await sensor.save();
-
-    global.io.emit('sensor-data', "Cập nhật dữ liệu sensor thành công");
+    console.log("sensorData", sensorData);
+    global.io.emit('sensor-data', sensorData);
     // Control devices based on sensor data
     // await deviceControlService.controlDevicesBySensorData(sensorData);
 
@@ -78,11 +78,13 @@ class SensorService {
 
   async updateSensorActive(roomId, isActive, orgId) {
     if (!roomId) {
-      throw new Error('Room ID is required');
+      console.error('Room ID is required');
+      return;
     }
     
     if (!orgId) {
-      throw new Error('Organization ID is required');
+      console.error('Organization ID is required');
+      return;
     }
     
     // Cập nhật tất cả thiết bị trong phòng đã chọn và thuộc tổ chức đó
