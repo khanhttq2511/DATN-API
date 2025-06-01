@@ -36,7 +36,6 @@ class SensorService {
     sensorData.isActive = true;
     const sensor = new Sensor(sensorData);
     const savedSensor = await sensor.save();
-    console.log("sensorData", sensorData);
     global.io.emit('sensor-data', sensorData);
     // Control devices based on sensor data
     // await deviceControlService.controlDevicesBySensorData(sensorData);
@@ -45,7 +44,7 @@ class SensorService {
   }
 
   async getAllSensors(roomId, organizationId) {
-    return await Sensor.find({ roomId, organizationId }).sort({ createdAt: -1 });
+    return await Sensor.find({ roomId, organizationId }).sort({ createdAt: -1 }).limit(100);
   }
 
   async getSensorById(roomId, organizationId) {
@@ -95,7 +94,6 @@ class SensorService {
       },
       { $set: { isActive: isActive } }
     );
-    console.log("result", result);
     return result;
   }
 

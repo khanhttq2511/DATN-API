@@ -31,18 +31,29 @@ agenda.on("complete", (job) => {
 });
 
 agenda.on("fail", (err, job) => {
-  console.error(`❌ Job [${job.attrs.name}] failed: ${err.message}`);
+  console.error(`❌ Job [${job.attrs.name}] failed:`, err);
 });
 
 if (agendaAutoMode) { // Kiểm tra xem nó có được định nghĩa không
   agendaAutoMode.on("start", (job) => {
-    console.log(`🚀 AUTO_MODE_CRON Start: Job [${job.attrs.name}], ScheduleID: ${job.attrs.data ? job.attrs.data.scheduleId : 'N/A'}, DeviceID: ${job.attrs.data ? job.attrs.data.deviceId : 'N/A'}`);
+    console.log(`🚀 AUTO_MODE_CRON Start: Job [${job.attrs.name}], ScheduleID: ${job.attrs.name.split('_')[1] || 'N/A'}`);
+    console.log(`🚀 AUTO_MODE_CRON Next run: ${job.attrs.nextRunAt}`);
   });
+  
   agendaAutoMode.on("complete", (job) => {
-    console.log(`✅ AUTO_MODE_CRON Complete: Job [${job.attrs.name}], ScheduleID: ${job.attrs.data ? job.attrs.data.scheduleId : 'N/A'}, DeviceID: ${job.attrs.data ? job.attrs.data.deviceId : 'N/A'}`);
+    console.log(`✅ AUTO_MODE_CRON Complete: Job [${job.attrs.name}], ScheduleID: ${job.attrs.name.split('_')[1] || 'N/A'}`);
   });
+  
   agendaAutoMode.on("fail", (err, job) => {
-    console.error(`❌ AUTO_MODE_CRON Fail: Job [${job.attrs.name}], ScheduleID: ${job.attrs.data ? job.attrs.data.scheduleId : 'N/A'}, DeviceID: ${job.attrs.data ? job.attrs.data.deviceId : 'N/A'}. Error: ${err.message}`, err);
+    console.error(`❌ AUTO_MODE_CRON Fail: Job [${job.attrs.name}], ScheduleID: ${job.attrs.name.split('_')[1] || 'N/A'}. Error: ${err.message}`, err);
+  });
+
+  agendaAutoMode.on("success", (job) => {
+    console.log(`✅ AUTO_MODE_CRON Success: Job [${job.attrs.name}], ScheduleID: ${job.attrs.name.split('_')[1] || 'N/A'}`);
+  });
+
+  agendaAutoMode.on("error", (err) => {
+    console.error(`❌ AUTO_MODE_CRON Error: ${err.message}`, err);
   });
 }
 

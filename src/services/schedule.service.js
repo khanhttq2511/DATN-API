@@ -97,18 +97,21 @@ class ScheduleService {
 
   // --- Auto Mode Schedule Methods ---
   async createOrUpdateAutoModeSchedule(scheduleData) {
-    function createCronExpression(timeHHMM, daysOfWeek) {
-      const [hour, minute] = timeHHMM.split(':').map(Number);
+    function createCronExpression(localTimeHHMM, daysOfWeek, timezoneOffset = 7) {
+      let [hour, minute] = localTimeHHMM.split(':').map(Number);
+    
+      // Convert GMT+7 → UTC
+      hour = hour - timezoneOffset;
+      if (hour < 0) hour += 24;
     
       const dayMap = {
         Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6
       };
-    
       const dayNumbers = daysOfWeek.map(day => dayMap[day]);
       const dayPart = dayNumbers.join(',');
     
-      return `${minute} ${hour} * * ${dayPart}`;  // Ex: "0 18 * * 1,3,5"
-    }
+      return `${minute} ${hour} * * ${dayPart}`;
+    }  
 
     try {
       const device = await DeviceService.getDeviceById(scheduleData.deviceId);
@@ -280,7 +283,7 @@ class ScheduleService {
       };
   
       sendMessageToTopic('devices-down', formattoPub);
-      global.io.emit('executeAutoModeSchedule', `Auto-mode executed successfully`);
+      global.io.emit('executeSchedule', `Auto-mode executed successfully`);
       return { message: 'Auto-mode executed successfully' };
   
     } catch (error) {
@@ -362,7 +365,7 @@ class ScheduleService {
         roomType: schedule.roomType
       };
       sendMessageToTopic('devices-down', formattoPub);
-      global.io.emit('executeAutoModeAction', {
+      global.io.emit('executeSchedule', {
          message: `Auto-mode action executed for device ${deviceId}`,
          deviceId,
          status: targetDeviceStatusString,

@@ -8,7 +8,7 @@ class NotifyService {
   }
 
   async getNotify(notify) {
-    return Notify.find(notify).sort({ createdAt: -1 });
+    return Notify.find(notify).sort({ createdAt: -1 }).limit(100);
   }
 
   async updateNotify(notify) {
